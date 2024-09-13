@@ -1,10 +1,5 @@
 #include "transformation.h"
 
-#include <math.h>
-#include "matrix.h"
-#include "dynarr.h"
-
-
 
 //Note: gennerally the order should be scale, then rotate, then translate. 
 

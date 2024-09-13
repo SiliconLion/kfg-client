@@ -91,6 +91,45 @@ void full_geom_replace_verts_and_indices(FullGeometry* g, dynarr new_verts, dyna
 }
 
 
+//creates a FullGeometry<ThreeNormPoint> from an stl file. path is the path to the stl file
+FullGeometry full_geom_from_stl(const char * path, GLenum usage) {
+    stl_obj *obj = stl_from_file(path);
+    if (obj == NULL) {
+        printf("cannot read stl from file path");
+        exit(-1);
+    }
+
+    stl_normalize(obj, 1.0);
+
+
+    //3 verticies per triangle.
+    dynarr vertices = dynarr_new(sizeof(ThreeNormPoint), obj->tri_count * 3);
+
+    printf("sizeof(ThreeNormPoint) = %zu \n", sizeof(ThreeNormPoint));
+
+    for (int i = 0; i < obj->tri_count; i++) {
+        for (int j = 0; j < 3; j++) {
+
+            ThreeNormPoint p;
+            memcpy(&p.pos, obj->tris[i].verts[j], sizeof(float) * 3);
+            memcpy(&p.norm, obj->tris[i].norm, sizeof(float) * 3);
+
+            dynarr_push(&vertices, (void*)&p);
+        }
+    }
+
+//    Geometry * geom = geom_new(GL_STATIC_DRAW);
+//
+//    geom_replace_verticies(geom, vert_data, obj->tri_count * 3);
+
+    return full_geom_new(
+            ThreeNormPointBlueprint, sizeof(ThreeNormPoint),
+            vertices, DYNARR_ZERO,
+            GL_TRIANGLES, usage
+            );
+}
+
+
 //creates a Geometry from an stl file.
 
 
@@ -201,7 +240,7 @@ void geom_replace_verticies(Geometry* geom, float * data, int vertex_count) {
 }
 
 
-//creates a Geometry from an stl file. 
+//creates a Geometry<ThreeNormPoint> from an stl file.
 //Path is the path to the stl file
 Geometry * geom_from_stl(const char * path) {
     stl_obj * obj = stl_from_file(path);

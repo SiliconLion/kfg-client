@@ -28,8 +28,5 @@ target_include_directories(threeDplay
         PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/lib
         )
-#target_include_directories(
-#        PUBLIC
-#        ./lib
-#        )
+
 

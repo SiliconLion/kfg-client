@@ -1,5 +1,4 @@
 #include "utilities.h"
-#include <stdbool.h>
 
 //path is a null terminated string of the file path
 //sets length to be length of the file in bytes. Pass in NULL to ignore this 

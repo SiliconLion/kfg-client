@@ -3,6 +3,28 @@
 #include "utilities.h"
 
 
+const mat_3x3 MAT_3X3_ZERO = {.elements =
+        {0.0, 0.0, 0.0,
+         0.0, 0.0, 0.0,
+         0.0, 0.0, 0.0}};
+
+const mat_3x3 MAT_3X3_IDENT = {.elements =
+        {1.0, 0.0, 0.0,
+         0.0, 1.0, 0.0,
+         0.0, 0.0, 1.0}};
+
+const mat_4x4 MAT_4x4_ZERO = {.elements =
+        {0.0, 0.0, 0.0, 0.0,
+         0.0, 0.0, 0.0, 0.0,
+         0.0, 0.0, 0.0, 0.0,
+         0.0, 0.0, 0.0, 0.0}};
+
+const mat_4x4 MAT_4X4_IDENT = {.elements =
+        {1.0, 0.0, 0.0, 0.0,
+         0.0, 1.0, 0.0, 0.0,
+         0.0, 0.0, 1.0, 0.0,
+         0.0, 0.0, 0.0, 1.0 }};
+
 //returns whether the matricies are equal or not
 bool mat_3x3_equal(mat_3x3 lhs, mat_3x3 rhs) {
     int cmp = memcmp(lhs.elements, rhs.elements, sizeof(float) * 9);

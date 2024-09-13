@@ -51,10 +51,14 @@ void full_geom_unbind();
 //note, takes ownership of new_verts and new_indices. Either can be empty, but why have a geometry
 //with no vertices?
 void full_geom_replace_verts_and_indices(FullGeometry* g, dynarr new_verts, dynarr new_indices);
+//creates a FullGeometry<ThreeNormPoint> from an stl file. path is the path to the stl file
+//Note: does not de-dupe vertices (ie, does not index the vertices, for the
+// stl format has everthing in terms of triangle. It can be done but isn't here).
+FullGeometry full_geom_from_stl(const char * path, GLenum usage);
 
 void full_geom_draw(FullGeometry * g);
-
 void full_geom_draw_wireframe(FullGeometry * g, float line_width);
+
 void full_geom_delete(FullGeometry * g);
 
 

@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <sys/wait.h>
 #include <assert.h>
+#include <string.h>
+//inelegant but saves me the CMake headache 
 #include "matrix.h"
 #include "utilities.h"
 #include "dynarr.h"
