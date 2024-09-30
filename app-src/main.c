@@ -7,143 +7,248 @@
 
 #include <stdbool.h>
 
+#include "linmath.h"
+
+#include "omni-include.h"
+
 #include "stlreader.h"
 #include "geometry.h"
 #include "shader.h"
 #include "texture.h"
+//#include "transformation.h"
 
+#include "board.h"
 
+//global so callbacks can see them
+int windowWidth_global, windowHeight_global;
 
-struct {
-    float x_offset;
-    float y_offset;
-    float x_rotation;
-    float y_rotation;
-} globalstate = {0.0, 0.0, 0.0, 0.0};
-
-
+//on a GLFW error, will print the error
+void error_callback(int error, const char* description) {
+    fprintf(stderr, "Error: %s\n", description);
+}
 
 //updates the glViewport when the window is resized.
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+    windowWidth_global = width;
+    windowHeight_global = height;
 }
 
-//nothing special, just processes input. its a function to keep things nice.
-void processInput(GLFWwindow *window)
+//closes the application when escape key is pressed
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-
-    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
-    if(glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        globalstate.x_offset += 0.01;
-    }
-    if(glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        globalstate.x_offset -= 0.01;
-    }
-    if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        globalstate.y_offset += 0.01;
-    }
-    if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        globalstate.y_offset -= 0.01;
-    }
-
-    double xpos, ypos;
-    glfwGetCursorPos(window, &xpos, &ypos);
-
-    int width, height;
-    glfwGetWindowSize(window, &width, &height);
-
-    //this feels backwards, but remember we're rotating along axis, so its right.
-    globalstate.x_rotation = 2 * (ypos / width) - 1 ;
-    globalstate.y_rotation = 2 * (xpos / height) - 1;
-
 }
 
-int main(int argc, char *argv[])
-{
 
-    const char*  model_path;
-    if (argc == 2) {
-        model_path = argv[1];
-    } else {
-        model_path = "assets/models/mushu.stl";
+int main() {
+
+    //Just plain GLFW window setup and opengl context creation.
+    if(!glfwInit()) {
+        return 2;
     }
+    glfwSetErrorCallback(error_callback);
 
-    glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     //needed for mac
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "3D Play :D", NULL, NULL);
-    if (window == NULL)
-    {
-        printf("Failed to create GLFW window\n");
-        glfwTerminate();
-        return -1;
+    GLFWwindow * window = glfwCreateWindow(640, 480, "Transform", NULL, NULL);
+    if(!window) {
+        return 2;
     }
-
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    glViewport(0, 0, 800, 600);
     glfwMakeContextCurrent(window);
 
-    //adds the callback we defined above to a change in framebuffer size
+    glfwGetFramebufferSize(window, &windowWidth_global, &windowHeight_global);
+    glViewport(0, 0, windowWidth_global, windowHeight_global);
+
+
+    //adding callbacks for
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetKeyCallback(window, key_callback);
+
+    //to avoid screen tearing.
+    glfwSwapInterval(1);
+
+
+    Board board = board_new(19, 19);
+    Texture* board_texture = tex_new("assets/matcap/normalsmatcap.png", false);
+
+
+    //location of the transformation uniform
+    unsigned int transform_loc = glGetUniformLocation(board.board_shader->program, "transformation");
+    unsigned int scale_loc = glGetUniformLocation(board.board_shader->program, "scale");
+
+
+
+    //will be used for rotation based on mouse movement. See more in render loop
+    float xrot = 0;
+    float yrot = 0;
+    //the components of the previous mouse position.
+    //starting at the center so everything will be rotated relative to the center of
+    //the window.
+    float  prev_xpos = windowHeight_global / 2;
+    float  prev_ypos = windowWidth_global / 2;
+
+//    //the transformation chain used to keep track of the scale
+//    tran_chain scale = tran_chain_new();
+//    //the transformation chain used to collect all the transformations
+//    tran_chain trans = tran_chain_new();
 
 
 
 
 
-    FullGeometry geom = full_geom_from_stl(model_path, GL_STATIC_DRAW);
-
-    Shader * shad = shad_new("shaders/matcap/vertex.vert", "shaders/matcap/fragment.frag");
-
-    Texture * texture = tex_new("assets/matcap/clay_brown.png", true);
-
-    printf("verticies count: %zu\n", geom.vertices.len);
+    //bind the shader program
+    shad_bind(board.board_shader);
 
 
+    //the render loop
+    while (!glfwWindowShouldClose(window)) {
 
-    unsigned int x_offset_loc   = glGetUniformLocation(shad->program, "x_offset");
-    unsigned int y_offset_loc   = glGetUniformLocation(shad->program, "y_offset");
-    unsigned int x_rotation_loc = glGetUniformLocation(shad->program, "x_rotation");
-    unsigned int y_rotation_loc = glGetUniformLocation(shad->program, "y_rotation");
+        mat4x4 IDENTITY;
+        mat4x4_identity(IDENTITY);
+        mat4x4 scale;
+        mat4x4_dup(scale, IDENTITY);
+        mat4x4 rotation;
+        mat4x4_dup(rotation, IDENTITY);
 
-    unsigned int matcap_loc     = glGetUniformLocation(shad->program, "matcap");
-    glUniform1i(matcap_loc, 0);
-
-    shad_bind(shad);
-    while(!glfwWindowShouldClose(window)) {
-
-        processInput(window);
-
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        //just clears the screen for rendering
+        // glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
 
-        // angle += 0.01;
-        glUniform1f(x_offset_loc  , globalstate.x_offset  );
-        glUniform1f(y_offset_loc  , globalstate.y_offset  );
-        glUniform1f(x_rotation_loc, globalstate.x_rotation);
-        glUniform1f(y_rotation_loc, globalstate.y_rotation);
 
-        tex_bind(texture, 0);
 
-        full_geom_draw(&geom);
+//        //maintains a square aspect ratio when window isn't square
+//        //not sure it's 100% sound but works pretty well
+//        tran_chain_add(&scale, trans_new_scale(
+//                               (float)windowHeight_global/(float)windowWidth_global,
+//                               1.0f,
+//                               1.0f
+//                       )
+//        );
+        mat4x4_scale_aniso(scale, scale,
+                           (float)windowHeight_global/(float)windowWidth_global,
+                           1.0f,
+                           1.0f
+                       );
 
+//        //just adjusts the scale of the geometry to be half the size
+//        tran_chain_add(&scale, trans_new_scale(0.5, 0.5, 0.5));
+
+        mat4x4_scale(scale, scale, 0.5f);
+
+
+        //here we're using the mouse movement to generate a rotation for the geometry
+        //(the block is purely aesthetic to visually seperate this calculation from the rest
+        //of the render code)
+        {
+            //stores the current cursor position
+            double curr_xpos, curr_ypos;
+            glfwGetCursorPos(window, &curr_xpos, &curr_ypos);
+
+            //This is basically the mouse movement delta, but normalized so it fits
+            //the openGL coordinates better.
+            //A movement along the x axis corresponds to a rotation around the y axis and visaversa.
+            yrot += -1.0f * (curr_xpos - prev_xpos) / (windowWidth_global / 2);
+            xrot += -1.0f * (curr_ypos - prev_ypos) / (windowHeight_global / 2);
+
+            //
+            prev_xpos = curr_xpos;
+            prev_ypos = curr_ypos;
+
+            //add the x and y rotations to the chain
+//            tran_chain_add(&trans, trans_new_y_rot(yrot) );
+//            tran_chain_add(&trans, trans_new_x_rot(xrot) );
+            mat4x4_rotate_Y(rotation, rotation, yrot);
+            mat4x4_rotate_X(rotation, rotation, xrot);
+        }
+
+
+        //draw board
+        {
+            shad_bind(board.board_shader);
+
+            //combine all the transformations into one and send to gpu.
+//            trans_send_uniform(transform_loc, tran_chain_squash(&trans));
+//            trans_send_uniform(scale_loc, tran_chain_squash(&scale));
+
+            glUniformMatrix4fv(
+                    scale_loc,
+                    1,
+                    GL_FALSE, //column major order
+                    scale
+            );
+
+            glUniformMatrix4fv(
+                    transform_loc,
+                    1,
+                    GL_FALSE,// column major order
+                    rotation
+            );
+
+            tex_bind(board_texture, 0);
+            full_geom_draw(&board.board_geometry);
+        }
+
+        //draw stones
+        {
+            shad_bind(board.stones_shader);
+
+//            //combine all the transformations into one and send to gpu.
+//            trans_send_uniform(transform_loc, tran_chain_squash(&trans));
+//            trans_send_uniform(scale_loc, tran_chain_squash(&scale));
+
+            glUniformMatrix4fv(
+                    scale_loc,
+                    1,
+                    //because it is in row major order, we set transpose to true.
+                    GL_TRUE,
+                    scale
+            );
+
+            glUniformMatrix4fv(
+                    transform_loc,
+                    1,
+                    //because it is in row major order, we set transpose to true.
+                    GL_TRUE,
+                    rotation
+            );
+
+            tex_bind(board_texture, 0);
+            full_geom_draw(&board.stone_geometry);
+        }
+
+
+
+
+//        tran_chain_clear(&trans);
+//        tran_chain_clear(&scale);
+
+        //present the render to the window and poll events
         glfwSwapBuffers(window);
-
         glfwPollEvents();
+
+
     }
 
+    //standard cleanup code
+//    tran_chain_delete(&trans);
+//    tran_chain_delete(&scale);
+
+//    geom_delete(cube);
+//    geom_delete(ball);
+//    shad_delete(shad);
+//    tex_delete(ball_texture);
+//    tex_delete(cube_texture);
+
+    board_delete(&board);
+
+    glfwDestroyWindow(window);
     glfwTerminate();
-    return 0;
-
-
 }
-
-
-

@@ -41,11 +41,11 @@ target_link_libraries(Random-walker threeDplay stb )
 
 
 #This is the actual end product program
-add_executable(Client main.c)
+add_executable(Client main.c board.c scene.c)
 
 target_link_libraries(Client glfw)
 target_link_libraries(Client OpenGL::GL)
-target_link_libraries(Client threeDplay stb )
+target_link_libraries(Client threeDplay stb linmath)
 
 #copies assets and shaders to the build dir
 file(COPY assets DESTINATION ./)
