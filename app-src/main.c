@@ -7,7 +7,7 @@
 
 #include <stdbool.h>
 
-#include "linmath.h"
+//#include "linmath.h"
 
 #include "omni-include.h"
 
@@ -16,8 +16,9 @@
 #include "shader.h"
 #include "texture.h"
 //#include "transformation.h"
-
+#include "camera.h"
 #include "board.h"
+#include "error-handling.h"
 
 //global so callbacks can see them
 int windowWidth_global, windowHeight_global;
@@ -82,6 +83,23 @@ int main() {
     //location of the transformation uniform
     unsigned int transform_loc = glGetUniformLocation(board.board_shader->program, "transformation");
     unsigned int scale_loc = glGetUniformLocation(board.board_shader->program, "scale");
+    unsigned int perspective_loc = glGetUniformLocation(board.board_shader->program, "perspective");
+
+//    unsigned int transform_loc = glGetUniformLocation(board.board_shader->program, "transformation");
+//    unsigned int scale_loc = glGetUniformLocation(board.board_shader->program, "scale");
+//    unsigned int perspective_loc = glGetUniformLocation(board.board_shader->program, "perspective");
+
+
+    vec3 camera_pos = {100.f};
+    vec3 camera_look_at = {0.f};
+    Camera camera = camera_new(
+            camera_pos, camera_look_at,
+            M_PI_4, // PI/4 rad = 45 degrees
+            M_PI_4,
+            -0.1f,
+            -100.f
+        );
+
 
 
 
@@ -118,9 +136,13 @@ int main() {
         mat4x4_dup(rotation, IDENTITY);
 
         //just clears the screen for rendering
-        // glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.4f, 0.1f, 0.2f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+
+
 
 
 
@@ -162,17 +184,16 @@ int main() {
             prev_xpos = curr_xpos;
             prev_ypos = curr_ypos;
 
-            //add the x and y rotations to the chain
-//            tran_chain_add(&trans, trans_new_y_rot(yrot) );
-//            tran_chain_add(&trans, trans_new_x_rot(xrot) );
-            mat4x4_rotate_Y(rotation, rotation, yrot);
-            mat4x4_rotate_X(rotation, rotation, xrot);
+            camera.look_at_point[0] = 30;
+            camera.look_at_point[1] = yrot;
+
         }
 
 
         //draw board
         {
             shad_bind(board.board_shader);
+            GLERROR();
 
             //combine all the transformations into one and send to gpu.
 //            trans_send_uniform(transform_loc, tran_chain_squash(&trans));
@@ -184,45 +205,78 @@ int main() {
                     GL_FALSE, //column major order
                     scale
             );
+            GLERROR();
 
+//            glUniformMatrix4fv(
+//                    transform_loc,
+//                    1,
+//                    GL_FALSE,// column major order
+//                    rotation
+//            );
             glUniformMatrix4fv(
                     transform_loc,
                     1,
                     GL_FALSE,// column major order
-                    rotation
+                    camera.camera_transform
             );
+            GLERROR();
+            glUniformMatrix4fv(
+                    perspective_loc,
+                    1,
+                    GL_FALSE,// column major order
+                    camera.perspective_transform
+            );
+            GLERROR();
 
             tex_bind(board_texture, 0);
+            GLERROR();
             full_geom_draw(&board.board_geometry);
+            GLERROR();
         }
 
-        //draw stones
-        {
-            shad_bind(board.stones_shader);
-
-//            //combine all the transformations into one and send to gpu.
-//            trans_send_uniform(transform_loc, tran_chain_squash(&trans));
-//            trans_send_uniform(scale_loc, tran_chain_squash(&scale));
-
-            glUniformMatrix4fv(
-                    scale_loc,
-                    1,
-                    //because it is in row major order, we set transpose to true.
-                    GL_TRUE,
-                    scale
-            );
-
-            glUniformMatrix4fv(
-                    transform_loc,
-                    1,
-                    //because it is in row major order, we set transpose to true.
-                    GL_TRUE,
-                    rotation
-            );
-
-            tex_bind(board_texture, 0);
-            full_geom_draw(&board.stone_geometry);
-        }
+//        //draw stones
+//        {
+//            shad_bind(board.stones_shader);
+//            GLERROR();
+//
+////            //combine all the transformations into one and send to gpu.
+////            trans_send_uniform(transform_loc, tran_chain_squash(&trans));
+////            trans_send_uniform(scale_loc, tran_chain_squash(&scale));
+//
+//            glUniformMatrix4fv(
+//                    scale_loc,
+//                    1,
+//                    //because it is in row major order, we set transpose to true.
+//                    GL_TRUE,
+//                    scale
+//            );
+//            GLERROR();
+//
+////            glUniformMatrix4fv(
+////                    transform_loc,
+////                    1,
+////                    //because it is in row major order, we set transpose to true.
+////                    GL_TRUE,
+////                    rotation
+////            );
+//            glUniformMatrix4fv(
+//                    transform_loc,
+//                    1,
+//                    GL_FALSE,// column major order
+//                    camera.camera_transform
+//            );
+//            GLERROR();
+//            glUniformMatrix4fv(
+//                    perspective_loc,
+//                    1,
+//                    GL_FALSE,// column major order
+//                    camera.perspective_transform
+//            );
+//            GLERROR();
+//
+//            tex_bind(board_texture, 0);
+//            full_geom_draw(&board.stone_geometry);
+//        }
 
 
 
@@ -234,6 +288,7 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
 
+        GLERROR();
 
     }
 
