@@ -46,6 +46,11 @@ add_executable(Client main.c board.c scene.c camera.c model.c )
 target_link_libraries(Client glfw)
 target_link_libraries(Client OpenGL::GL)
 target_link_libraries(Client threeDplay stb linmath)
+target_link_libraries(Client cglm_headers)
+
+#add_subdirectory(external/cglm/ EXCLUDE_FROM_ALL)
+
+
 
 #copies assets and shaders to the build dir
 file(COPY assets DESTINATION ./)

@@ -1,17 +1,17 @@
 #pragma once
 
-#include "linmath.h"
+#include <cglm/cglm.h>
 
 typedef struct {
-    mat4x4 camera_transform; //matrix that converts world coords to camera coords
+    mat4 view; //matrix that converts world coords to camera coords
    //these are the variables needed to construction the camera transform.
    //anytime these are updated, the camera_transform should be updated
     vec3 pos;
-    vec3 look_at_point;
+    vec3 target;
 
     //matrix that converts camera coords to clip coords and applies
     // a perspective effect
-    mat4x4 perspective_transform;
+    mat4 perspective;
 
     //these are the varibles needed to construct the perspective transform.
     //anytime they are set, the persepective_transform should be updated.

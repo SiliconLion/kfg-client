@@ -2,7 +2,7 @@
 #include <stdio.h>
 //#include "helpers.h"
 
-void mat4x4_print(mat4x4 M) {
+void mat4x4_print(mat4 M) {
     printf(
             " | %f, %f, %f, %f | \n"
             " | %f, %f, %f, %f | \n"
@@ -27,8 +27,8 @@ Camera camera_new(
         .near_plane = near_plane,
         .far_plane = far_plane
     }; //initializes everything thats trivial
-    vec3_dup(c.pos, pos);
-    vec3_dup(c.look_at_point, look_at_point);
+    glm_vec3_copy(c.pos, pos);
+    glm_vec3_copy(c.target, look_at_point);
 
     camera_update(&c);
 
@@ -83,28 +83,32 @@ Camera camera_new(
 
 //call this on the camera any time you set a variable in the camera
 void camera_update(Camera* c) {
-    mat4x4_perspective(
-            c->perspective_transform,
-            c->y_fov, c->aspect, c->near_plane, c->far_plane
-    );
+//    mat4_perspective(
+//            c->perspective,
+//            c->y_fov, c->aspect, c->near_plane, c->far_plane
+//    );
+    glm_mat4_identity(c->perspective);
 //    hidden_construct_look_at(c->camera_transform, c->pos, c->look_at_point);
 
     //d represents the direction the camera is looking at.
-    vec3 eye = {0};
-    vec3_sub(eye, c->look_at_point, c->pos);
-    vec3_norm(eye, eye);
+    vec3 eye;
+    glm_vec3_sub(c->target, c->pos, eye);
+    glm_vec3_norm(eye);
     // eye = |look_at_point - pos|
 
     vec3 up = {0.f, 1.0f, 0.0f}; //global up
-    mat4x4_look_at(c->camera_transform, eye, c->pos, up);
+//    mat4x4_look_at(c->view, eye, c->pos, up);
 //    mat4x4_translate_in_place(
 //            c->camera_transform, c->pos[0], c->pos[1], c->pos[2]
 //            );
 
-
+//    mat4 dest;
+    glm_lookat(eye, c->pos, up, c->view);
+//    glm_lookat(eye, c->pos, up, dest);
 
     printf("look-at matrix \n");
-    mat4x4_print(c->camera_transform);
+    mat4x4_print(c->view);
+//    mat4x4_print(dest);
 
 //    printf("perspective matrix \n");
 //    mat4x4_print(c->perspective_transform);

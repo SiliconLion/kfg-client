@@ -128,12 +128,10 @@ int main() {
     //the render loop
     while (!glfwWindowShouldClose(window)) {
 
-        mat4x4 IDENTITY;
-        mat4x4_identity(IDENTITY);
-        mat4x4 scale;
-        mat4x4_dup(scale, IDENTITY);
-        mat4x4 rotation;
-        mat4x4_dup(rotation, IDENTITY);
+        mat4 scale;
+        glm_mat4_identity(scale);
+        mat4 rotation;
+        glm_mat4_identity(rotation);
 
         //just clears the screen for rendering
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -154,16 +152,17 @@ int main() {
 //                               1.0f
 //                       )
 //        );
-        mat4x4_scale_aniso(scale, scale,
-                           (float)windowHeight_global/(float)windowWidth_global,
-                           1.0f,
-                           1.0f
-                       );
+//        mat4x4_scale_aniso(scale, scale,
+//                           (float)windowHeight_global/(float)windowWidth_global,
+//                           1.0f,
+//                           1.0f
+//                       );
+
 
 //        //just adjusts the scale of the geometry to be half the size
 //        tran_chain_add(&scale, trans_new_scale(0.5, 0.5, 0.5));
 
-        mat4x4_scale(scale, scale, 0.5f);
+        glm_mat4_scale(scale, 0.5f);
 
 
         //here we're using the mouse movement to generate a rotation for the geometry
@@ -222,14 +221,14 @@ int main() {
                     transform_loc,
                     1,
                     GL_FALSE,// column major order
-                    camera.camera_transform
+                    camera.view
             );
             GLERROR();
             glUniformMatrix4fv(
                     perspective_loc,
                     1,
                     GL_FALSE,// column major order
-                    camera.perspective_transform
+                    camera.perspective
             );
             GLERROR();
 
