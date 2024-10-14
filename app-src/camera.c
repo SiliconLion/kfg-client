@@ -2,7 +2,7 @@
 #include <stdio.h>
 //#include "helpers.h"
 
-void mat4x4_print(mat4 M) {
+void mat4_print(mat4 M) {
     printf(
             " | %f, %f, %f, %f | \n"
             " | %f, %f, %f, %f | \n"
@@ -83,11 +83,16 @@ Camera camera_new(
 
 //call this on the camera any time you set a variable in the camera
 void camera_update(Camera* c) {
-//    mat4_perspective(
+//    mat4x4_perspective(
 //            c->perspective,
 //            c->y_fov, c->aspect, c->near_plane, c->far_plane
 //    );
-    glm_mat4_identity(c->perspective);
+
+    glm_perspective(
+            c->y_fov, c->aspect,
+            c->near_plane, c->far_plane,
+            c->perspective);
+
 //    hidden_construct_look_at(c->camera_transform, c->pos, c->look_at_point);
 
     //d represents the direction the camera is looking at.
@@ -97,20 +102,12 @@ void camera_update(Camera* c) {
     // eye = |look_at_point - pos|
 
     vec3 up = {0.f, 1.0f, 0.0f}; //global up
-//    mat4x4_look_at(c->view, eye, c->pos, up);
-//    mat4x4_translate_in_place(
-//            c->camera_transform, c->pos[0], c->pos[1], c->pos[2]
-//            );
-
-//    mat4 dest;
     glm_lookat(eye, c->pos, up, c->view);
-//    glm_lookat(eye, c->pos, up, dest);
 
     printf("look-at matrix \n");
-    mat4x4_print(c->view);
-//    mat4x4_print(dest);
+    mat4_print(c->view);
 
-//    printf("perspective matrix \n");
-//    mat4x4_print(c->perspective_transform);
+    printf("perspective matrix \n");
+    mat4_print(c->perspective);
 }
 

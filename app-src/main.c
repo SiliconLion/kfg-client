@@ -96,11 +96,9 @@ int main() {
             camera_pos, camera_look_at,
             M_PI_4, // PI/4 rad = 45 degrees
             M_PI_4,
-            -0.1f,
-            -100.f
+            0.1f,
+            100.f
         );
-
-
 
 
     //will be used for rotation based on mouse movement. See more in render loop

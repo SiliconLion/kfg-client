@@ -14,8 +14,10 @@ Board board_new(u32 row_count, u32 col_count) {
         exit(-5);
     }
 
+//    FullGeometry board_geometry = full_geom_from_stl(
+//            "assets/models/go-board-basic.stl", GL_STATIC_DRAW);
     FullGeometry board_geometry = full_geom_from_stl(
-            "assets/models/go-board-basic.stl", GL_STATIC_DRAW);
+            "assets/models/baby-yoda.stl", GL_STATIC_DRAW);
     FullGeometry stone_geometry = full_geom_from_stl(
             "assets/models/go-stone-basic1.stl", GL_STATIC_DRAW);
 
