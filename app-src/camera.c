@@ -32,13 +32,6 @@ Camera camera_new(
 
     camera_update(&c);
 
-    printf("look-at matrix \n");
-    mat4x4_print(c.camera_transform);
-
-    printf("perspective matrix \n");
-    mat4x4_print(c.perspective_transform);
-
-
     return c;
 }
 
@@ -104,5 +97,16 @@ void camera_update(Camera* c) {
 
     vec3 up = {0.f, 1.0f, 0.0f}; //global up
     mat4x4_look_at(c->camera_transform, eye, c->pos, up);
+//    mat4x4_translate_in_place(
+//            c->camera_transform, c->pos[0], c->pos[1], c->pos[2]
+//            );
+
+
+
+    printf("look-at matrix \n");
+    mat4x4_print(c->camera_transform);
+
+//    printf("perspective matrix \n");
+//    mat4x4_print(c->perspective_transform);
 }
 

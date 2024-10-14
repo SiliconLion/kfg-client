@@ -177,15 +177,20 @@ int main() {
             //This is basically the mouse movement delta, but normalized so it fits
             //the openGL coordinates better.
             //A movement along the x axis corresponds to a rotation around the y axis and visaversa.
-            yrot += -1.0f * (curr_xpos - prev_xpos) / (windowWidth_global / 2);
-            xrot += -1.0f * (curr_ypos - prev_ypos) / (windowHeight_global / 2);
+//            yrot += -1.0f * (curr_xpos - prev_xpos) / (windowWidth_global / 2);
+//            xrot += -1.0f * (curr_ypos - prev_ypos) / (windowHeight_global / 2);
 
-            //
+            yrot +=  (curr_xpos - prev_xpos) / (windowWidth_global / 2);
+            xrot +=  (curr_ypos - prev_ypos) / (windowHeight_global / 2);
+
             prev_xpos = curr_xpos;
             prev_ypos = curr_ypos;
 
-            camera.look_at_point[0] = 30;
-            camera.look_at_point[1] = yrot;
+//            camera.look_at_point[0] = xrot * 500000.f ;
+//            camera.look_at_point[1] = yrot * 500000.f;
+            camera.pos[0] = xrot ;
+            camera.pos[1] = yrot ;
+            camera_update(&camera);
 
         }
 
