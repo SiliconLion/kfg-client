@@ -60,6 +60,105 @@ FullGeometry prim_new_tex_rect(GLenum usage) {
     //no need to delete vertices or indices because their ownership is passed into g
 }
 
+FullGeometry prim_new_tex_rect_3d(GLenum usage) {
+    dynarr vertices = dynarr_new(sizeof(ThreeTexPoint), 4);
+    dynarr indices = dynarr_new(sizeof(INDEX_TYPE), 6);
+
+    ThreeTexPoint vertices_data [4] = {
+            {{-1.0f, 1.0f, 0.f}, {0.f, 1.f} },
+            {{1.0f, 1.0f, 0.f}, {1.f, 1.f}},
+            {{-1.0f, -1.0f, 0.f}, {0.f, 0.f}},
+            {{1.0f, -1.0f, 0.f}, {1.f, 0.f}}
+    };
+
+//    //this is sometimes helpful for debugging
+//    for(int i = 0; i < 4; i++) {
+//        TwoTexPoint* vert = vertices_data + i;
+//        vert->pos[0] *= 0.9;
+//        vert->pos[1] *= 0.9;
+//    }
+
+    INDEX_TYPE indices_data [6] = {
+            1, 0, 2,
+            1, 2, 3
+    };
+
+    dynarr_append_slice(&vertices, vertices_data, 4);
+    dynarr_append_slice(&indices, indices_data, 6);
+
+    FullGeometry g = full_geom_new(
+            ThreeTexPointBlueprint, sizeof(ThreeTexPoint), vertices, indices, GL_TRIANGLES, usage
+    );
+    return g;
+    //no need to free vertices_data or indices_data because they are stack allocated.
+    //no need to delete vertices or indices because their ownership is passed into g
+}
+
+
+FullGeometry prim_new_tex_cube(GLenum usage) {
+
+    //TODO, there are duplicates that can be reduced in the vertices
+    dynarr vertices = dynarr_new(sizeof(ThreeTexPoint), 36);
+    dynarr indices = dynarr_new(sizeof(INDEX_TYPE), 36);
+
+    float vertices_data[] = {
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+            0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    };
+
+    dynarr_append_slice(&vertices, vertices_data, 36);
+
+    //indices becomes [0..36)
+    for(int i = 0; i< 36; i++) {
+        dynarr_push(&indices, &i);
+    }
+
+    FullGeometry g = full_geom_new(
+            ThreeTexPointBlueprint, sizeof(ThreeTexPoint), vertices, indices, GL_TRIANGLES, usage
+    );
+    return g;
+    //no need to free vertices_data or indices_data because they are stack allocated.
+    //no need to delete vertices or indices because their ownership is passed into g
+}
 
 
 //TODO: Maybe move this into a new file. It's not really a "primitive" is it?

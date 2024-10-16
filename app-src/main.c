@@ -15,10 +15,16 @@
 #include "geometry.h"
 #include "shader.h"
 #include "texture.h"
-//#include "transformation.h"
+#include "model.h"
 #include "camera.h"
 #include "board.h"
 #include "error-handling.h"
+#include "primatives.h"
+#include "helpers.h"
+
+#define CGLM_DEFINE_PRINTS
+#include "cglm/cglm.h"
+
 
 //global so callbacks can see them
 int windowWidth_global, windowHeight_global;
@@ -85,12 +91,70 @@ int main() {
     unsigned int scale_loc = glGetUniformLocation(board.board_shader->program, "scale");
     unsigned int perspective_loc = glGetUniformLocation(board.board_shader->program, "perspective");
 
-//    unsigned int transform_loc = glGetUniformLocation(board.board_shader->program, "transformation");
-//    unsigned int scale_loc = glGetUniformLocation(board.board_shader->program, "scale");
-//    unsigned int perspective_loc = glGetUniformLocation(board.board_shader->program, "perspective");
+
+    vec3 XAXIS = {1.0f, 0.f, 0.f};
+    vec3 YAXIS = {0.0f, 1.f, 0.f};
+    vec3 ZAXIS = {0.0f, 0.f, 1.f};
 
 
-    vec3 camera_pos = {100.f};
+
+    Model floor;
+    floor.geom = prim_new_tex_rect_3d(GL_STATIC_DRAW);
+    floor.tex = tex_new("assets/misc-textures/wood-floor-texture.jpg", false);
+
+    glm_mat4_identity(floor.model_matrix);
+    glm_scale(floor.model_matrix, (vec3){20, 20, 20});
+    glm_rotate(floor.model_matrix, M_PI_2, XAXIS);
+    //floor is now a 100x100 plane in x/z, with y = 0.
+
+    printf("floor model matrix: \n");
+    mat4_print(floor.model_matrix);
+    printf("\n");
+
+
+
+    Model wall[8];
+    Texture* wall_tex = tex_new("assets/misc-textures/wallpaper-texture.jpg", false);
+    for(u32 i = 0; i < 8; i++) {
+        wall[i].geom = prim_new_tex_rect_3d(GL_STATIC_DRAW);
+        wall[i].tex = wall_tex;
+
+        glm_mat4_identity(wall[i].model_matrix);
+        glm_translate(wall[i].model_matrix, (vec3) {0, 0, 10});
+//        glm_rotate_at(
+//                wall[i].model_matrix,
+//                (vec3){0, 0, 0},
+//                M_PI_2 * i,
+//                YAXIS);
+//        glm_rotate(wall[i].model_matrix, M_PI_2 * i, YAXIS);
+
+        glm_scale(wall[i].model_matrix, (vec3) {10, 10, 10});
+//        printf("wall model matrix %u: \n", i);
+//        mat4_print(wall[i].model_matrix);
+//        printf("\n");
+
+
+        mat4 test;
+        glm_mat4_identity(test);
+        glm_rotate(test, M_PI_4 * i, YAXIS);
+        printf("test matrix %u \n", i);
+        mat4_print(test);
+        printf("\n");
+
+        glm_mat4_mul(test, wall[i].model_matrix, wall[i].model_matrix);
+    }
+
+
+
+    Shader* model_shader = shad_new("shaders/model/model.vert", "shaders/model/model.frag");
+    GLERROR();
+    u32 model_matrix_loc = glGetUniformLocation(model_shader->program, "model");
+    u32 model_view_loc = glGetUniformLocation(model_shader->program, "view");
+    u32 model_perspective_loc = glGetUniformLocation(model_shader->program, "perspective");
+    GLERROR();
+
+//TODO: the fact that we need to negate the y component is a bug
+    vec3 camera_pos = {0.f, -15.f, 0.f};
     vec3 camera_look_at = {0.f};
     Camera camera = camera_new(
             camera_pos, camera_look_at,
@@ -100,32 +164,33 @@ int main() {
             100.f
         );
 
-
-    //will be used for rotation based on mouse movement. See more in render loop
-    float xrot = 0;
-    float yrot = 0;
-    //the components of the previous mouse position.
-    //starting at the center so everything will be rotated relative to the center of
-    //the window.
-    float  prev_xpos = windowHeight_global / 2;
-    float  prev_ypos = windowWidth_global / 2;
-
-//    //the transformation chain used to keep track of the scale
-//    tran_chain scale = tran_chain_new();
-//    //the transformation chain used to collect all the transformations
-//    tran_chain trans = tran_chain_new();
-
-
-
+    f32 camera_path_radius = 20;
+    f32 camera_speed = (1.f / 60.f) * 0.5; //assuming 60fps, .5 meters/second
+    //its bad assumptions, but good ballpark
 
 
     //bind the shader program
     shad_bind(board.board_shader);
 
 
+    u64 frames = 0;
+
+    glEnable(GL_CULL_FACE);
+
     //the render loop
     while (!glfwWindowShouldClose(window)) {
 
+        f32 c_pos_x = camera_path_radius * sinf(camera_speed * frames);
+        f32 c_pos_y = -15.f;
+        f32 c_pos_z = camera_path_radius * cosf(camera_speed * frames);
+
+        vec3 c_pos = {c_pos_x, c_pos_y, c_pos_z};
+
+        glm_vec3_copy(c_pos, camera.pos);
+        camera_update(&camera);
+
+
+        //TODO: remove these (will need to modify the shader source)
         mat4 scale;
         glm_mat4_identity(scale);
         mat4 rotation;
@@ -157,43 +222,14 @@ int main() {
 //                       );
 
 
-//        //just adjusts the scale of the geometry to be half the size
-//        tran_chain_add(&scale, trans_new_scale(0.5, 0.5, 0.5));
+//        f32 window_ratio = (float)windowHeight_global/(float)windowWidth_global;
 
-        glm_mat4_scale(scale, 0.5f);
-
-
-        //here we're using the mouse movement to generate a rotation for the geometry
-        //(the block is purely aesthetic to visually seperate this calculation from the rest
-        //of the render code)
-        {
-            //stores the current cursor position
-            double curr_xpos, curr_ypos;
-            glfwGetCursorPos(window, &curr_xpos, &curr_ypos);
-
-            //This is basically the mouse movement delta, but normalized so it fits
-            //the openGL coordinates better.
-            //A movement along the x axis corresponds to a rotation around the y axis and visaversa.
-//            yrot += -1.0f * (curr_xpos - prev_xpos) / (windowWidth_global / 2);
-//            xrot += -1.0f * (curr_ypos - prev_ypos) / (windowHeight_global / 2);
-
-            yrot +=  (curr_xpos - prev_xpos) / (windowWidth_global / 2);
-            xrot +=  (curr_ypos - prev_ypos) / (windowHeight_global / 2);
-
-            prev_xpos = curr_xpos;
-            prev_ypos = curr_ypos;
-
-//            camera.look_at_point[0] = xrot * 500000.f ;
-//            camera.look_at_point[1] = yrot * 500000.f;
-            camera.pos[0] = xrot ;
-            camera.pos[1] = yrot ;
-            camera_update(&camera);
-
-        }
 
 
         //draw board
         {
+            glCullFace(GL_BACK);
+
             shad_bind(board.board_shader);
             GLERROR();
 
@@ -236,55 +272,99 @@ int main() {
             GLERROR();
         }
 
-//        //draw stones
-//        {
+        //draw stones
+        {
 //            shad_bind(board.stones_shader);
-//            GLERROR();
-//
-////            //combine all the transformations into one and send to gpu.
-////            trans_send_uniform(transform_loc, tran_chain_squash(&trans));
-////            trans_send_uniform(scale_loc, tran_chain_squash(&scale));
-//
-//            glUniformMatrix4fv(
-//                    scale_loc,
-//                    1,
-//                    //because it is in row major order, we set transpose to true.
-//                    GL_TRUE,
-//                    scale
-//            );
-//            GLERROR();
-//
-////            glUniformMatrix4fv(
-////                    transform_loc,
-////                    1,
-////                    //because it is in row major order, we set transpose to true.
-////                    GL_TRUE,
-////                    rotation
-////            );
+            GLERROR();
+
+//            //combine all the transformations into one and send to gpu.
+//            trans_send_uniform(transform_loc, tran_chain_squash(&trans));
+//            trans_send_uniform(scale_loc, tran_chain_squash(&scale));
+
+            glUniformMatrix4fv(
+                    scale_loc,
+                    1,
+                    //because it is in row major order, we set transpose to true.
+                    GL_TRUE,
+                    scale
+            );
+            GLERROR();
+
 //            glUniformMatrix4fv(
 //                    transform_loc,
 //                    1,
-//                    GL_FALSE,// column major order
-//                    camera.camera_transform
+//                    //because it is in row major order, we set transpose to true.
+//                    GL_TRUE,
+//                    rotation
 //            );
-//            GLERROR();
-//            glUniformMatrix4fv(
-//                    perspective_loc,
-//                    1,
-//                    GL_FALSE,// column major order
-//                    camera.perspective_transform
-//            );
-//            GLERROR();
-//
-//            tex_bind(board_texture, 0);
-//            full_geom_draw(&board.stone_geometry);
-//        }
+            glUniformMatrix4fv(
+                    transform_loc,
+                    1,
+                    GL_FALSE,// column major order
+                    camera.view
+            );
+            GLERROR();
+            glUniformMatrix4fv(
+                    perspective_loc,
+                    1,
+                    GL_FALSE,// column major order
+                    camera.perspective
+            );
+            GLERROR();
+
+            tex_bind(board_texture, 0);
+            full_geom_draw(&board.stone_geometry);
+        }
 
 
+    //begin drawing models
+        {
+            shad_bind(model_shader);
+            GLERROR();
 
+            glUniformMatrix4fv(
+                    model_view_loc,
+                    1,
+                    GL_FALSE,// column major order
+                    camera.view
+            );
+            GLERROR();
+            glUniformMatrix4fv(
+                    model_perspective_loc,
+                    1,
+                    GL_FALSE,// column major order
+                    camera.perspective
+            );
+            GLERROR();
 
-//        tran_chain_clear(&trans);
-//        tran_chain_clear(&scale);
+            //draw floor
+            {
+                glCullFace(GL_FRONT);
+                model_draw(&floor, model_matrix_loc);
+                GLERROR();
+            }
+
+            //draw walls
+            {
+                glCullFace(GL_FRONT);
+                for(int i = 0; i < 8; i++) {
+//                    glm_translate(wall.model_matrix,
+//                      (vec3){
+//                            sinf(M_PI_2 * i),
+//                            0,
+//                            cosf(M_PI_2 * i)
+//                        }
+//                    );
+//                    glm_rotate_at(
+//                            wall.model_matrix,
+//                            (vec3){0, 0, 0},
+//                            M_PI_4 * i,
+//                            XAXIS);
+                    model_draw(&wall[i], model_matrix_loc);
+                }
+
+            }
+        }
 
         //present the render to the window and poll events
         glfwSwapBuffers(window);
@@ -292,17 +372,10 @@ int main() {
 
         GLERROR();
 
+        frames += 1;
+
     }
 
-    //standard cleanup code
-//    tran_chain_delete(&trans);
-//    tran_chain_delete(&scale);
-
-//    geom_delete(cube);
-//    geom_delete(ball);
-//    shad_delete(shad);
-//    tex_delete(ball_texture);
-//    tex_delete(cube_texture);
 
     board_delete(&board);
 

@@ -2,20 +2,7 @@
 #include <stdio.h>
 //#include "helpers.h"
 
-void mat4_print(mat4 M) {
-    printf(
-            " | %f, %f, %f, %f | \n"
-            " | %f, %f, %f, %f | \n"
-            " | %f, %f, %f, %f | \n"
-            " | %f, %f, %f, %f | \n"
-            "\n"
-            ,
-            M[0][0], M[1][0], M[2][0], M[3][0],
-            M[0][1], M[1][1], M[2][1], M[3][1],
-            M[0][2], M[1][2], M[2][2], M[3][2],
-            M[0][3], M[1][3], M[2][3], M[3][3]
-    );
-}
+
 
 Camera camera_new(
         vec3 pos, vec3 look_at_point,
@@ -104,10 +91,10 @@ void camera_update(Camera* c) {
     vec3 up = {0.f, 1.0f, 0.0f}; //global up
     glm_lookat(eye, c->pos, up, c->view);
 
-    printf("look-at matrix \n");
-    mat4_print(c->view);
-
-    printf("perspective matrix \n");
-    mat4_print(c->perspective);
+//    printf("look-at matrix \n");
+//    mat4_print(c->view);
+//
+//    printf("perspective matrix \n");
+//    mat4_print(c->perspective);
 }
 

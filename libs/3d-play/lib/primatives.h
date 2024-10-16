@@ -4,11 +4,18 @@
 #include "utilities.h"
 #include "vertices.h"
 
-//uses TwoPoint vertex type. Counter-clockwise winding direction
+//uses TwoPoint vertex type. Spans -1 to 1 for x and y Counter-clockwise winding direction
 FullGeometry prim_new_rect(GLenum usage);
 
-//uses TwoTexPoint vertex type. Counter-clockwise winding direction
+//uses TwoTexPoint vertex type. Spans -1 to 1 for x and y Counter-clockwise winding direction
 FullGeometry prim_new_tex_rect(GLenum usage);
+
+//uses ThreeTexPoint vertex type. Spans -1 to 1 for x and y. Z is 0.
+// Counter-clockwise winding direction
+FullGeometry prim_new_tex_rect_3d(GLenum usage);
+
+FullGeometry prim_new_tex_cube(GLenum usage);
+
 
 
 //TODO: Maybe move this into a new file. It's not really a "primitive" is it?

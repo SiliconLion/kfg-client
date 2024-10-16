@@ -11,12 +11,12 @@ void vec3_print(vec3 V) {
 void vec4_print(vec4 V) {
     printf("[%f,%f,%f,%f]", V[0], V[1], V[2], V[3]);
 }
-void mat4x4_print(mat4x4 M) {
+void mat4_print(mat4 M) {
     printf(
-            " | %f, %f, %f, %f | "
-            " | %f, %f, %f, %f | "
-            " | %f, %f, %f, %f | "
-            " | %f, %f, %f, %f | "
+            " | %f, %f, %f, %f | \n"
+            " | %f, %f, %f, %f | \n"
+            " | %f, %f, %f, %f | \n"
+            " | %f, %f, %f, %f | \n"
             "\n"
             ,
             M[0][0], M[1][0], M[2][0], M[3][0],
