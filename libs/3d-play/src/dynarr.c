@@ -80,6 +80,8 @@ void * dynarr_pop(dynarr * self) {
 //returns pointer to copy of element at index
 //bounds checked
 //frustratingly allocates + copies.
+//2024 david-- geez this is so not the right way to do this.
+//really should switch to cave-vec or someone elses dynamic array solution
 void * dynarr_get(dynarr * self, size_t index) {
     dynarr_check_index(self, index);
 

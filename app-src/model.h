@@ -17,19 +17,25 @@ typedef struct {
     //but I'm going to be assuming they are normalized.
     FullGeometry geom; //later this may become a vec of geometries
 
-    //ToDo: better name
-    //This matrix represents all the transformations that place the model into
+    //Vec<Mat4> ;.,,,lm
+    //These matrices represents all the transformations that place each instance into
     //world coordinates.
-    mat4 model_matrix;
+    dynarr model_instances;
 
     //eventually will probably be multiple textures (optional), but for now, we will do one
     //optional texture. If null, no texture.
     Texture* tex;
 } Model;
 
+Model model_new(FullGeometry geom, Texture* tex);
+
 //Model model_from_stl_file(const char* path);
 
-void model_draw(Model* m, u32 model_matrix_loc);
+//model_matrix_loc is the location of the uniform in the currently
+//bound shader that transforms local coordinates to world coordinates
+void model_draw_instances(Model* m, u32 model_matrix_loc);
+
+
 //actually wait on this because we might want to be smarter about
 //how textures are deleted
 //void model_delete(Model* m);

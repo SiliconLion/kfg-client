@@ -1,17 +1,32 @@
 
 #include "model.h"
 
+Model model_new(FullGeometry geom, Texture* tex) {
+    dynarr model_instances = dynarr_new(sizeof(mat4), 1);
+    return (Model){
+        .geom = geom, .model_instances = model_instances, .tex = tex
+    };
+}
 
-void model_draw(Model* m, u32 model_matrix_loc) {
-    glUniformMatrix4fv(
-            model_matrix_loc,
-            1,
-            GL_FALSE,// column major order
-            m->model_matrix
-    );
+//TODO: make this use the proper opengl instanced draw calls
+void model_draw_instances(Model* m, u32 model_matrix_loc) {
+    for(int i = 0; i < m->model_instances.len; i++) {
 
-    tex_bind(m->tex, 0);
-    full_geom_draw(&m->geom);
+        mat4* instance = dynarr_get(&m->model_instances, i);
+
+        glUniformMatrix4fv(
+                model_matrix_loc,
+        1,
+        GL_FALSE,// column major order
+        **instance
+        );
+
+        tex_bind(m
+        ->tex, 0);
+        full_geom_draw(&m->geom);
+
+        free(instance);
+    }
 }
 
 //void model_delete(Model* m) {

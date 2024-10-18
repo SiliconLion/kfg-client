@@ -6,6 +6,7 @@
 #endif
 
 #include <stdbool.h>
+#include <string.h>
 
 //#include "linmath.h"
 
@@ -81,58 +82,44 @@ int main() {
     //to avoid screen tearing.
     glfwSwapInterval(1);
 
-
-    Board board = board_new(19, 19);
-    Texture* board_texture = tex_new("assets/matcap/normalsmatcap.png", false);
-
-
-    //location of the transformation uniform
-    unsigned int transform_loc = glGetUniformLocation(board.board_shader->program, "transformation");
-    unsigned int scale_loc = glGetUniformLocation(board.board_shader->program, "scale");
-    unsigned int perspective_loc = glGetUniformLocation(board.board_shader->program, "perspective");
-
-
     vec3 XAXIS = {1.0f, 0.f, 0.f};
     vec3 YAXIS = {0.0f, 1.f, 0.f};
     vec3 ZAXIS = {0.0f, 0.f, 1.f};
 
 
 
-    Model floor;
-    floor.geom = prim_new_tex_rect_3d(GL_STATIC_DRAW);
-    floor.tex = tex_new("assets/misc-textures/wood-floor-texture.jpg", false);
 
-    glm_mat4_identity(floor.model_matrix);
-    glm_scale(floor.model_matrix, (vec3){20, 20, 20});
-    glm_rotate(floor.model_matrix, M_PI_2, XAXIS);
+    FullGeometry floor_geom = prim_new_tex_rect_3d(GL_STATIC_DRAW);
+    Texture* floor_tex = tex_new("assets/misc-textures/wood-floor-texture.jpg", false);
+    Model floor = model_new(floor_geom, floor_tex);
+
+    mat4 instance;
+    glm_mat4_identity(instance);
+
+
+    glm_mat4_identity(instance);
+    glm_scale(instance, (vec3){20, 20, 20});
+    glm_rotate(instance, M_PI_2, XAXIS);
     //floor is now a 100x100 plane in x/z, with y = 0.
 
     printf("floor model matrix: \n");
-    mat4_print(floor.model_matrix);
+    mat4_print(instance);
     printf("\n");
 
+    dynarr_push(&floor.model_instances, &instance);
+
+    glm_mat4_identity(instance);//clears `instance` cuz we reuse it l8r
 
 
-    Model wall[8];
+
     Texture* wall_tex = tex_new("assets/misc-textures/wallpaper-texture.jpg", false);
+    FullGeometry wall_geom = prim_new_tex_rect_3d(GL_STATIC_DRAW);
+    Model wall = model_new(wall_geom, wall_tex);
     for(u32 i = 0; i < 8; i++) {
-        wall[i].geom = prim_new_tex_rect_3d(GL_STATIC_DRAW);
-        wall[i].tex = wall_tex;
+        glm_mat4_identity(instance);
 
-        glm_mat4_identity(wall[i].model_matrix);
-        glm_translate(wall[i].model_matrix, (vec3) {0, 0, 10});
-//        glm_rotate_at(
-//                wall[i].model_matrix,
-//                (vec3){0, 0, 0},
-//                M_PI_2 * i,
-//                YAXIS);
-//        glm_rotate(wall[i].model_matrix, M_PI_2 * i, YAXIS);
-
-        glm_scale(wall[i].model_matrix, (vec3) {10, 10, 10});
-//        printf("wall model matrix %u: \n", i);
-//        mat4_print(wall[i].model_matrix);
-//        printf("\n");
-
+        glm_translate(instance, (vec3) {0, 0, 10});
+        glm_scale(instance, (vec3) {10, 10, 10});
 
         mat4 test;
         glm_mat4_identity(test);
@@ -141,7 +128,9 @@ int main() {
         mat4_print(test);
         printf("\n");
 
-        glm_mat4_mul(test, wall[i].model_matrix, wall[i].model_matrix);
+        glm_mat4_mul(test, instance, instance);
+
+        dynarr_push(&wall.model_instances, &instance);
     }
 
 
@@ -167,11 +156,6 @@ int main() {
     f32 camera_path_radius = 20;
     f32 camera_speed = (1.f / 60.f) * 0.5; //assuming 60fps, .5 meters/second
     //its bad assumptions, but good ballpark
-
-
-    //bind the shader program
-    shad_bind(board.board_shader);
-
 
     u64 frames = 0;
 
@@ -226,95 +210,6 @@ int main() {
 
 
 
-        //draw board
-        {
-            glCullFace(GL_BACK);
-
-            shad_bind(board.board_shader);
-            GLERROR();
-
-            //combine all the transformations into one and send to gpu.
-//            trans_send_uniform(transform_loc, tran_chain_squash(&trans));
-//            trans_send_uniform(scale_loc, tran_chain_squash(&scale));
-
-            glUniformMatrix4fv(
-                    scale_loc,
-                    1,
-                    GL_FALSE, //column major order
-                    scale
-            );
-            GLERROR();
-
-//            glUniformMatrix4fv(
-//                    transform_loc,
-//                    1,
-//                    GL_FALSE,// column major order
-//                    rotation
-//            );
-            glUniformMatrix4fv(
-                    transform_loc,
-                    1,
-                    GL_FALSE,// column major order
-                    camera.view
-            );
-            GLERROR();
-            glUniformMatrix4fv(
-                    perspective_loc,
-                    1,
-                    GL_FALSE,// column major order
-                    camera.perspective
-            );
-            GLERROR();
-
-            tex_bind(board_texture, 0);
-            GLERROR();
-            full_geom_draw(&board.board_geometry);
-            GLERROR();
-        }
-
-        //draw stones
-        {
-//            shad_bind(board.stones_shader);
-            GLERROR();
-
-//            //combine all the transformations into one and send to gpu.
-//            trans_send_uniform(transform_loc, tran_chain_squash(&trans));
-//            trans_send_uniform(scale_loc, tran_chain_squash(&scale));
-
-            glUniformMatrix4fv(
-                    scale_loc,
-                    1,
-                    //because it is in row major order, we set transpose to true.
-                    GL_TRUE,
-                    scale
-            );
-            GLERROR();
-
-//            glUniformMatrix4fv(
-//                    transform_loc,
-//                    1,
-//                    //because it is in row major order, we set transpose to true.
-//                    GL_TRUE,
-//                    rotation
-//            );
-            glUniformMatrix4fv(
-                    transform_loc,
-                    1,
-                    GL_FALSE,// column major order
-                    camera.view
-            );
-            GLERROR();
-            glUniformMatrix4fv(
-                    perspective_loc,
-                    1,
-                    GL_FALSE,// column major order
-                    camera.perspective
-            );
-            GLERROR();
-
-            tex_bind(board_texture, 0);
-            full_geom_draw(&board.stone_geometry);
-        }
 
 
     //begin drawing models
@@ -340,28 +235,14 @@ int main() {
             //draw floor
             {
                 glCullFace(GL_FRONT);
-                model_draw(&floor, model_matrix_loc);
+                model_draw_instances(&floor, model_matrix_loc);
                 GLERROR();
             }
 
             //draw walls
             {
                 glCullFace(GL_FRONT);
-                for(int i = 0; i < 8; i++) {
-//                    glm_translate(wall.model_matrix,
-//                      (vec3){
-//                            sinf(M_PI_2 * i),
-//                            0,
-//                            cosf(M_PI_2 * i)
-//                        }
-//                    );
-//                    glm_rotate_at(
-//                            wall.model_matrix,
-//                            (vec3){0, 0, 0},
-//                            M_PI_4 * i,
-//                            XAXIS);
-                    model_draw(&wall[i], model_matrix_loc);
-                }
+                model_draw_instances(&wall, model_matrix_loc);
 
             }
         }
@@ -376,8 +257,7 @@ int main() {
 
     }
 
-
-    board_delete(&board);
+    //TODO: Delete models
 
     glfwDestroyWindow(window);
     glfwTerminate();
