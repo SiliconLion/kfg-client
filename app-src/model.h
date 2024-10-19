@@ -17,7 +17,7 @@ typedef struct {
     //but I'm going to be assuming they are normalized.
     FullGeometry geom; //later this may become a vec of geometries
 
-    //Vec<Mat4> ;.,,,lm
+    //Vec<Mat4>
     //These matrices represents all the transformations that place each instance into
     //world coordinates.
     dynarr model_instances;
@@ -25,8 +25,10 @@ typedef struct {
     //eventually will probably be multiple textures (optional), but for now, we will do one
     //optional texture. If null, no texture.
     Texture* tex;
+
 } Model;
 
+//tex can be null
 Model model_new(FullGeometry geom, Texture* tex);
 
 //Model model_from_stl_file(const char* path);

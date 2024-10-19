@@ -118,12 +118,13 @@ int main() {
     for(u32 i = 0; i < 8; i++) {
         glm_mat4_identity(instance);
 
-        glm_translate(instance, (vec3) {0, 0, 10});
-        glm_scale(instance, (vec3) {10, 10, 10});
+        glm_translate(instance, (vec3) {0, 0, 15});
+        glm_scale(instance, (vec3) {15, 15, 15});
 
+        //TODO: condence this
         mat4 test;
         glm_mat4_identity(test);
-        glm_rotate(test, M_PI_4 * i, YAXIS);
+        glm_rotate(test, M_PI +M_PI_4 * i, YAXIS);
         printf("test matrix %u \n", i);
         mat4_print(test);
         printf("\n");
@@ -132,6 +133,16 @@ int main() {
 
         dynarr_push(&wall.model_instances, &instance);
     }
+
+    glm_mat4_identity(instance);//clears `instance` cuz we reuse it l8r
+
+    FullGeometry board_geom = prim_new_tex_cube(GL_STATIC_DRAW);
+    Texture* board_tex = tex_new("assets/misc-textures/light-wood.jpg", false);
+    Model board = model_new(board_geom, board_tex);
+
+    glm_scale(instance, (vec3){8, 2, 8});
+
+    dynarr_push(&board.model_instances, &instance);
 
 
 
@@ -142,8 +153,8 @@ int main() {
     u32 model_perspective_loc = glGetUniformLocation(model_shader->program, "perspective");
     GLERROR();
 
-//TODO: the fact that we need to negate the y component is a bug
-    vec3 camera_pos = {0.f, -15.f, 0.f};
+//TODO: the fact that we need to negate the y component is a bug.
+    vec3 camera_pos = {0.f, -9.f, 0.f};
     vec3 camera_look_at = {0.f};
     Camera camera = camera_new(
             camera_pos, camera_look_at,
@@ -153,8 +164,8 @@ int main() {
             100.f
         );
 
-    f32 camera_path_radius = 20;
-    f32 camera_speed = (1.f / 60.f) * 0.5; //assuming 60fps, .5 meters/second
+    f32 camera_path_radius = 14;
+    f32 camera_speed = (1.f / 60.f) * 0.3; //assuming 60fps, .5 meters/second
     //its bad assumptions, but good ballpark
 
     u64 frames = 0;
@@ -165,7 +176,7 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
 
         f32 c_pos_x = camera_path_radius * sinf(camera_speed * frames);
-        f32 c_pos_y = -15.f;
+        f32 c_pos_y = -12.f; //this should not need to be negative. TODO
         f32 c_pos_z = camera_path_radius * cosf(camera_speed * frames);
 
         vec3 c_pos = {c_pos_x, c_pos_y, c_pos_z};
@@ -209,14 +220,15 @@ int main() {
 //        f32 window_ratio = (float)windowHeight_global/(float)windowWidth_global;
 
 
-
-
-
+//        glCullFace(GL_BACK);
+//        glCullFace(GL_FRONT);
+        glDisable(GL_CULL_FACE);
     //begin drawing models
         {
             shad_bind(model_shader);
             GLERROR();
 
+            //bind view matrix
             glUniformMatrix4fv(
                     model_view_loc,
                     1,
@@ -224,6 +236,7 @@ int main() {
                     camera.view
             );
             GLERROR();
+            //bind perspective matrix
             glUniformMatrix4fv(
                     model_perspective_loc,
                     1,
@@ -234,16 +247,22 @@ int main() {
 
             //draw floor
             {
-                glCullFace(GL_FRONT);
+//                glCullFace(GL_FRONT); //could flip the model around I guess. TODO
                 model_draw_instances(&floor, model_matrix_loc);
                 GLERROR();
             }
 
             //draw walls
             {
-                glCullFace(GL_FRONT);
+//                glCullFace(GL_FRONT); //could flip the model around I guess. TODO
                 model_draw_instances(&wall, model_matrix_loc);
 
+            }
+
+            //draw board
+            {
+//
+                model_draw_instances(&board, model_matrix_loc);
             }
         }
 

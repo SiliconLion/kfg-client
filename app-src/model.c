@@ -21,8 +21,10 @@ void model_draw_instances(Model* m, u32 model_matrix_loc) {
         **instance
         );
 
-        tex_bind(m
-        ->tex, 0);
+        if(m->tex) {
+            tex_bind(m->tex, 0);
+        }
+
         full_geom_draw(&m->geom);
 
         free(instance);
