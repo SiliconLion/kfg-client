@@ -29,6 +29,7 @@
 
 //global so callbacks can see them
 int windowWidth_global, windowHeight_global;
+f32 window_ratio_global;
 
 //on a GLFW error, will print the error
 void error_callback(int error, const char* description) {
@@ -40,6 +41,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
     windowWidth_global = width;
     windowHeight_global = height;
+    window_ratio_global = (float)width / (float)height;
 }
 
 //closes the application when escape key is pressed
@@ -74,6 +76,7 @@ int main() {
     glfwGetFramebufferSize(window, &windowWidth_global, &windowHeight_global);
     glViewport(0, 0, windowWidth_global, windowHeight_global);
 
+    window_ratio_global = (float)windowWidth_global / (float)windowHeight_global;
 
     //adding callbacks for
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -81,6 +84,13 @@ int main() {
 
     //to avoid screen tearing.
     glfwSwapInterval(1);
+
+
+
+
+
+
+
 
     vec3 XAXIS = {1.0f, 0.f, 0.f};
     vec3 YAXIS = {0.0f, 1.f, 0.f};
@@ -124,7 +134,7 @@ int main() {
         //TODO: condence this
         mat4 test;
         glm_mat4_identity(test);
-        glm_rotate(test, M_PI +M_PI_4 * i, YAXIS);
+        glm_rotate(test, M_PI_4 * i, YAXIS);
         printf("test matrix %u \n", i);
         mat4_print(test);
         printf("\n");
@@ -159,7 +169,7 @@ int main() {
     Camera camera = camera_new(
             camera_pos, camera_look_at,
             M_PI_4, // PI/4 rad = 45 degrees
-            M_PI_4,
+            window_ratio_global,
             0.1f,
             100.f
         );
@@ -182,6 +192,7 @@ int main() {
         vec3 c_pos = {c_pos_x, c_pos_y, c_pos_z};
 
         glm_vec3_copy(c_pos, camera.pos);
+        camera.aspect = window_ratio_global;
         camera_update(&camera);
 
 
@@ -217,11 +228,9 @@ int main() {
 //                       );
 
 
-//        f32 window_ratio = (float)windowHeight_global/(float)windowWidth_global;
 
 
-//        glCullFace(GL_BACK);
-//        glCullFace(GL_FRONT);
+
         glDisable(GL_CULL_FACE);
     //begin drawing models
         {
@@ -244,7 +253,7 @@ int main() {
                     camera.perspective
             );
             GLERROR();
-
+            
             //draw floor
             {
 //                glCullFace(GL_FRONT); //could flip the model around I guess. TODO
