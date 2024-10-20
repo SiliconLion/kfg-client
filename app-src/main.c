@@ -54,6 +54,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 
 int main() {
+    f32 BOARD_WIDTH = 8.0;
+    f32 BOARD_HEIGHT = 2.0;
+    const mat4 IDENTITY;
+    glm_mat4_identity(IDENTITY);
 
     //Just plain GLFW window setup and opengl context creation.
     if(!glfwInit()) {
@@ -150,9 +154,52 @@ int main() {
     Texture* board_tex = tex_new("assets/misc-textures/light-wood.jpg", false);
     Model board = model_new(board_geom, board_tex);
 
-    glm_scale(instance, (vec3){8, 2, 8});
+    glm_scale(instance, (vec3){BOARD_WIDTH, BOARD_HEIGHT, BOARD_WIDTH});
 
     dynarr_push(&board.model_instances, &instance);
+
+    mat4 stone_scale;
+    glm_mat4_identity(stone_scale);
+    glm_scale(stone_scale, (vec3){
+        BOARD_WIDTH/26., BOARD_WIDTH/40., BOARD_WIDTH/26.
+    });
+//    glm_scale(stone_scale, (vec3){.5, .5, .5});
+
+    FullGeometry white_stones_geom = prim_new_tex_cube(GL_STATIC_DRAW);
+    Texture* white_stones_tex = tex_new("assets/misc-textures/white-stone-texture.jpg", false);
+    Model white_stones_model = model_new(white_stones_geom, white_stones_tex);
+
+
+    FullGeometry black_stones_geom = prim_new_tex_cube(GL_STATIC_DRAW);
+    Texture* black_stones_tex = tex_new("assets/misc-textures/black-stone-texture.jpg", false);
+    Model black_stones_model = model_new(black_stones_geom, black_stones_tex);
+
+
+    dynarr stone_centers = prim_grid_centers(19, 19, 1);
+    for(int i = 0; i < stone_centers.len; i++) {
+        vec3* center = dynarr_at(&stone_centers, i);
+        glm_vec3_scale(center, BOARD_WIDTH / 2., center);
+
+        //moves the stones up to the top of the board
+        //its BOARD_HEIGHT/2 because the board is centered on 0.
+        glm_vec3_add(center, (vec3){0, BOARD_HEIGHT / 2., 0}, center);
+
+
+        mat4 transform;
+        glm_mat4_identity(transform);
+        glm_translate(transform, center);
+        glm_mat4_mul(transform ,stone_scale,transform);
+
+        dynarr_push(&white_stones_model.model_instances, transform);
+        dynarr_push(&black_stones_model.model_instances, transform);
+    }
+
+
+
+
+
+
+
 
 
 
@@ -162,6 +209,8 @@ int main() {
     u32 model_view_loc = glGetUniformLocation(model_shader->program, "view");
     u32 model_perspective_loc = glGetUniformLocation(model_shader->program, "perspective");
     GLERROR();
+
+
 
 //TODO: the fact that we need to negate the y component is a bug.
     vec3 camera_pos = {0.f, -9.f, 0.f};
@@ -175,12 +224,29 @@ int main() {
         );
 
     f32 camera_path_radius = 14;
-    f32 camera_speed = (1.f / 60.f) * 0.3; //assuming 60fps, .5 meters/second
+    f32 camera_speed = (1.f / 60.f) * 0.1; //assuming 60fps, .1 meters/second
     //its bad assumptions, but good ballpark
 
     u64 frames = 0;
 
-    glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
+
+
+
+    //"game code"
+    dynarr black_stones = dynarr_new(sizeof(u32), 19 * 19);
+    dynarr white_stones = dynarr_new(sizeof(u32), 19 * 19);
+    for(u32 i = 0; i < 19 * 19; i++) {
+        f32 r = norm_rand();
+        if (r < 0.2) {
+            dynarr_push(&black_stones, &i);
+        } else if( r < 0.4) {
+            dynarr_push(&white_stones, &i);
+        } //else no stone
+    }
+
+
+
 
     //the render loop
     while (!glfwWindowShouldClose(window)) {
@@ -196,12 +262,6 @@ int main() {
         camera_update(&camera);
 
 
-        //TODO: remove these (will need to modify the shader source)
-        mat4 scale;
-        glm_mat4_identity(scale);
-        mat4 rotation;
-        glm_mat4_identity(rotation);
-
         //just clears the screen for rendering
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_DEPTH_BUFFER_BIT);
@@ -210,28 +270,6 @@ int main() {
 
 
 
-
-
-
-//        //maintains a square aspect ratio when window isn't square
-//        //not sure it's 100% sound but works pretty well
-//        tran_chain_add(&scale, trans_new_scale(
-//                               (float)windowHeight_global/(float)windowWidth_global,
-//                               1.0f,
-//                               1.0f
-//                       )
-//        );
-//        mat4x4_scale_aniso(scale, scale,
-//                           (float)windowHeight_global/(float)windowWidth_global,
-//                           1.0f,
-//                           1.0f
-//                       );
-
-
-
-
-
-        glDisable(GL_CULL_FACE);
     //begin drawing models
         {
             shad_bind(model_shader);
@@ -253,25 +291,35 @@ int main() {
                     camera.perspective
             );
             GLERROR();
-            
+
             //draw floor
             {
-//                glCullFace(GL_FRONT); //could flip the model around I guess. TODO
-                model_draw_instances(&floor, model_matrix_loc);
+                model_draw_all_instances(&floor, model_matrix_loc);
                 GLERROR();
             }
 
             //draw walls
             {
-//                glCullFace(GL_FRONT); //could flip the model around I guess. TODO
-                model_draw_instances(&wall, model_matrix_loc);
+                model_draw_all_instances(&wall, model_matrix_loc);
 
             }
 
             //draw board
             {
-//
-                model_draw_instances(&board, model_matrix_loc);
+                model_draw_all_instances(&board, model_matrix_loc);
+            }
+
+            //draw stones
+            {
+//                model_draw_all_instances(&white_stones, model_matrix_loc);
+//                model_draw_all_instances(&black_stones_model, model_matrix_loc);
+                model_draw_instance_list(
+                    &black_stones_model, black_stones.data, black_stones.len, model_matrix_loc
+                );
+
+                model_draw_instance_list(
+                    &white_stones_model, white_stones.data, white_stones.len, model_matrix_loc
+                );
             }
         }
 

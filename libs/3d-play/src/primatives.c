@@ -267,3 +267,34 @@ Geometry * prim_new_plane(float width, float height, int w_resolution, int h_res
 
     return geom;
 }
+
+
+// returns a dynarr<vec3> of positions of a grid broken into rows cols and ranks
+// everything centered in a 2x2x2 cube. "rank" here means vertical "rows"
+//the cube itself is centered on 0, so all dimensions span -1 to 1.
+dynarr prim_grid_centers(int row_count, int col_count, int rank_count) {
+    float x_step = 2.f / (float)row_count;
+    float y_step = 2.f / (float)rank_count;
+    float z_step = 2.f / (float)col_count;
+
+    vec3 origin = {-1, -1, -1};
+
+    //when we construct the grid, instead of everything being centered, we gonna have
+    //a row, column and rank all on their respective 0's. If this were a chessboard,
+    //we want the coordinates for where the chesspieces sit. So offset by half a step
+    vec3 offset = {.5f * x_step, .5f * y_step, .5f * z_step};
+
+    dynarr positions = dynarr_new(sizeof(vec3), row_count * col_count * rank_count);
+    for(int row = 0; row < row_count; row++) {
+        for(int rank = 0; rank < rank_count; rank++) {
+            for(int col = 0; col < col_count; col++) {
+                vec3 center = {x_step * (float)row, y_step * (float)rank, (float)z_step * col };
+                glm_vec3_add(origin, center, center);
+                glm_vec3_add(center, offset, center);
+
+                dynarr_push(&positions, &center);
+            }
+        }
+    }
+    return positions;
+}

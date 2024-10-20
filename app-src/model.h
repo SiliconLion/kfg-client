@@ -33,9 +33,24 @@ Model model_new(FullGeometry geom, Texture* tex);
 
 //Model model_from_stl_file(const char* path);
 
+
 //model_matrix_loc is the location of the uniform in the currently
 //bound shader that transforms local coordinates to world coordinates
-void model_draw_instances(Model* m, u32 model_matrix_loc);
+//draws the instance at `selected` index
+void model_draw_instance(Model* m, u32 selected,  u32 model_matrix_loc);
+
+//model_matrix_loc is the location of the uniform in the currently
+//bound shader that transforms local coordinates to world coordinates
+//draws every instance
+void model_draw_all_instances(Model* m, u32 model_matrix_loc);
+
+
+
+//model_matrix_loc is the location of the uniform in the currently
+//bound shader that transforms local coordinates to world coordinates
+//calls `model_draw_instance` for each index in `selected`
+//ideally selected should have no duplicates, but probably not gonna explode if it does
+void model_draw_instance_list(Model* m, u32* selected, usize selected_len, u32 model_matrix_loc);
 
 
 //actually wait on this because we might want to be smarter about

@@ -77,6 +77,12 @@ void * dynarr_pop(dynarr * self) {
     return element;
 }
 
+//returns a pointer to the element at index
+void * dynarr_at(dynarr * self, size_t index) {
+    return self->data + (index * self->stride);
+}
+
+
 //returns pointer to copy of element at index
 //bounds checked
 //frustratingly allocates + copies.

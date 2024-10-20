@@ -38,6 +38,10 @@ void dynarr_push(dynarr * self, void const * const element);
 //Frustraingly has to allocate due to the nature of void pointers
 void * dynarr_pop(dynarr * self);
 
+//returns a pointer to the element at index
+//TODO: write test for this
+void * dynarr_at(dynarr * self, size_t index);
+
 //returns pointer to copy of element at index
 //bounds checked
 //frustratingly allocates + copies.

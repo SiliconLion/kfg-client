@@ -22,6 +22,8 @@ add_compile_definitions(threeDplay GL_SILENCE_DEPRECATION)
 
 #links the stb library to three-d-play
 target_link_libraries(threeDplay stb)
+#links the cglm library to three-d-play
+target_link_libraries(threeDplay cglm)
 
 #exports the headers for three-d-play
 target_include_directories(threeDplay
