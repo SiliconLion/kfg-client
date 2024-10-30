@@ -10,3 +10,7 @@ not through my CLion setup.
 9/30/24 - David S- The "omni-include.h" file is meant to be included in pretty much all new code I write. It's inspired 
 by Nullprogram's 2023 C style guide https://nullprogram.com/blog/2023/10/08/ . It's mostly just convenient type 
 definitions and will expand over time. But may eventually include some configuration stuff I haven't decided.
+
+10/29/24 - David S- remember to run cmake whenever updating shaders cuz they're in the assets folder, and the 
+updated version wont get copied unless you do. 
+TODO: make it so CMake always checks for changes in the assets folder

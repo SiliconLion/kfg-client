@@ -9,11 +9,14 @@ uniform mat4x4 perspective; //camera coords -> clip coords
 
 uniform sampler2D Tex;
 
+out vec3 FragPos;
 out vec3 norm;
 out vec2 TexCoord;
 
 void main() {
-    norm = aNorm;
+    norm = normalize(aNorm);
     TexCoord = aTexCoord;
+    FragPos = vec3(model * vec4(aPos, 1.0));
+
     gl_Position = perspective * view * model * vec4(aPos, 1.0);
 }
