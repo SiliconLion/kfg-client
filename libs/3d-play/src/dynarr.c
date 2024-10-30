@@ -77,9 +77,36 @@ void * dynarr_pop(dynarr * self) {
     return element;
 }
 
+void dynarr_flood(dynarr* self, size_t count, void* pattern) {
+    if (count > self->capacity) {
+        void* ret = realloc(self->data, count * self->stride);
+        if(!ret) {
+            printf("out of memory. Cannot reallocate in dynarr_flood");
+            exit(-1);
+        }
+        self->capacity = count;
+    }
+    self->len = 0;
+
+    if(!pattern) {
+        memset(self->data, 0, count * self->stride);
+    } else {
+        for(size_t i = 0; i < count; i++) {
+            memcpy(self->data + (i * self->stride), pattern, self->stride);
+        }
+    }
+    self->len = count;
+    return;
+}
+
 //returns a pointer to the element at index
 void * dynarr_at(dynarr * self, size_t index) {
     return self->data + (index * self->stride);
+}
+
+void dynarr_cpy_into(dynarr * self, size_t index, void* dest) {
+    void * element = self->data + (index * self->stride);
+    memcpy(dest, element, self->stride);
 }
 
 

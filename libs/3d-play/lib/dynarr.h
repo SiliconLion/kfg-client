@@ -38,9 +38,20 @@ void dynarr_push(dynarr * self, void const * const element);
 //Frustraingly has to allocate due to the nature of void pointers
 void * dynarr_pop(dynarr * self);
 
+
+//empties `self`, then fills it with `count` elements with copies of
+// what `pattern` points to (self->stride # of bytes that is).
+//if `pattern == NULL`, then everything is just filled with zeros.
+//TODO: write test for this
+void dynarr_flood(dynarr* self, size_t count, void* pattern);
+
 //returns a pointer to the element at index
 //TODO: write test for this
 void * dynarr_at(dynarr * self, size_t index);
+
+//copies the element at index into dest
+//TODO: write test for this
+void dynarr_cpy_into(dynarr * self, size_t index, void* dest);
 
 //returns pointer to copy of element at index
 //bounds checked

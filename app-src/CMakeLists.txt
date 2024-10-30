@@ -41,7 +41,7 @@ target_link_libraries(Random-walker threeDplay stb )
 
 
 #This is the actual end product program
-add_executable(Client main.c board.c scene.c camera.c model.c helpers.c)
+add_executable(Client main.c board.c scene.c camera.c model.c helpers.c mesh-tools.c  dreadful-hacks.c dreadful-hacks.c)
 
 target_link_libraries(Client glfw)
 target_link_libraries(Client OpenGL::GL)

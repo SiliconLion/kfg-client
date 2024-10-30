@@ -22,6 +22,7 @@
 #include "error-handling.h"
 #include "primatives.h"
 #include "helpers.h"
+#include "dreadful-hacks.h"
 
 #define CGLM_DEFINE_PRINTS
 #include "cglm/cglm.h"
@@ -103,7 +104,8 @@ int main() {
 
 
 
-    FullGeometry floor_geom = prim_new_tex_rect_3d(GL_STATIC_DRAW);
+    FullGeometry floor_geom_data = prim_new_tex_rect_3d(GL_STATIC_DRAW);
+    FullGeometry floor_geom = add_normals_to_geom(&floor_geom_data);
     Texture* floor_tex = tex_new("assets/misc-textures/wood-floor-texture.jpg", false);
     Model floor = model_new(floor_geom, floor_tex);
 
@@ -127,7 +129,8 @@ int main() {
 
 
     Texture* wall_tex = tex_new("assets/misc-textures/wallpaper-texture.jpg", false);
-    FullGeometry wall_geom = prim_new_tex_rect_3d(GL_STATIC_DRAW);
+    FullGeometry wall_geom_data = prim_new_tex_rect_3d(GL_STATIC_DRAW);
+    FullGeometry wall_geom = add_normals_to_geom(&wall_geom_data);
     Model wall = model_new(wall_geom, wall_tex);
     for(u32 i = 0; i < 8; i++) {
         glm_mat4_identity(instance);
@@ -150,7 +153,8 @@ int main() {
 
     glm_mat4_identity(instance);//clears `instance` cuz we reuse it l8r
 
-    FullGeometry board_geom = prim_new_tex_cube(GL_STATIC_DRAW);
+    FullGeometry board_geom_data = prim_new_tex_cube(GL_STATIC_DRAW);
+    FullGeometry board_geom = add_normals_to_geom(&board_geom_data);
     Texture* board_tex = tex_new("assets/misc-textures/light-wood.jpg", false);
     Model board = model_new(board_geom, board_tex);
 
@@ -165,12 +169,14 @@ int main() {
     });
 //    glm_scale(stone_scale, (vec3){.5, .5, .5});
 
-    FullGeometry white_stones_geom = prim_new_tex_cube(GL_STATIC_DRAW);
+    FullGeometry white_stones_geom_data = prim_new_tex_cube(GL_STATIC_DRAW);
+    FullGeometry white_stones_geom = add_normals_to_geom(&white_stones_geom_data);
     Texture* white_stones_tex = tex_new("assets/misc-textures/white-stone-texture.jpg", false);
     Model white_stones_model = model_new(white_stones_geom, white_stones_tex);
 
 
-    FullGeometry black_stones_geom = prim_new_tex_cube(GL_STATIC_DRAW);
+    FullGeometry black_stones_geom_data = prim_new_tex_cube(GL_STATIC_DRAW);
+    FullGeometry black_stones_geom = add_normals_to_geom(&black_stones_geom_data);
     Texture* black_stones_tex = tex_new("assets/misc-textures/black-stone-texture.jpg", false);
     Model black_stones_model = model_new(black_stones_geom, black_stones_tex);
 
