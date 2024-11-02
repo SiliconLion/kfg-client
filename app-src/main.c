@@ -5,12 +5,10 @@
 #include <GLFW/glfw3.h>
 #endif
 
+#include "omni-include.h"
+
 #include <stdbool.h>
 #include <string.h>
-
-//#include "linmath.h"
-
-#include "omni-include.h"
 
 #include "stlreader.h"
 #include "geometry.h"
@@ -23,6 +21,7 @@
 #include "primatives.h"
 #include "helpers.h"
 #include "dreadful-hacks.h"
+#include "scene.h"
 
 #define CGLM_DEFINE_PRINTS
 #include "cglm/cglm.h"
@@ -90,6 +89,16 @@ int main() {
     //to avoid screen tearing.
     glfwSwapInterval(1);
 
+
+
+
+
+    bool it_works = DoTheImportThing("assets/scenes/Sponza/glTF/Sponza.gltf");
+    if(it_works) {
+        printf("HUZZAH! Assimp imported a complex gltf file");
+    } else {
+        printf("I weep, for dispite promises made, we could not import a gltf file");
+    }
 
 
 
@@ -250,6 +259,7 @@ int main() {
             dynarr_push(&white_stones, &i);
         } //else no stone
     }
+
 
 
 

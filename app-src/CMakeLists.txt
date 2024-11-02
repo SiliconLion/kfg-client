@@ -1,7 +1,7 @@
 
 
 
-
+set(CMAKE_C_STANDARD 11)
 
 #this way finds the *system* version of glfw. May switch to the precompiled binary in libs in the future
 find_package(glfw3 REQUIRED) #pick more specfic version in future
@@ -13,8 +13,9 @@ add_executable(Client main.c board.c scene.c camera.c model.c helpers.c mesh-too
 
 target_link_libraries(Client glfw)
 target_link_libraries(Client OpenGL::GL)
-target_link_libraries(Client threeDplay stb linmath)
+target_link_libraries(Client threeDplay stb)
 target_link_libraries(Client cglm_headers)
+target_link_libraries(Client assimp)
 
 #add_subdirectory(external/cglm/ EXCLUDE_FROM_ALL)
 

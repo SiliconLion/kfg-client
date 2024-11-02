@@ -1,7 +1,9 @@
 #pragma once
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 //#include <uchar.h>
+#include <stdlib.h>
 
 //This header is meant to be included in more or less every file in the program.
 //inspired by Nullprogram's 2023 C style guide https://nullprogram.com/blog/2023/10/08/
