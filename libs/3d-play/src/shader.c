@@ -1,5 +1,5 @@
 #include "shader.h"
-#include "utilities.c"
+#include "utilities.h"
 
 
 

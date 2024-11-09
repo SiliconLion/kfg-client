@@ -11,7 +11,7 @@
 #include "stb_image_write.h"
 #include <stdbool.h>
 
-#include "error-handling.c"
+#include "error-handling.h"
 
 
 

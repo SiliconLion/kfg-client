@@ -88,14 +88,14 @@ void vert_enable_four_norm_tex_point();
 
 typedef void VERTEX_BLUEPRINT();
 
-VERTEX_BLUEPRINT* TwoPointBlueprint;
-VERTEX_BLUEPRINT* ThreePointBlueprint;
-VERTEX_BLUEPRINT* FourPointBlueprint;
-VERTEX_BLUEPRINT* TwoTexPointBlueprint;
-VERTEX_BLUEPRINT* ThreeTexPointBlueprint;
-VERTEX_BLUEPRINT* FourTexPointBlueprint;
-VERTEX_BLUEPRINT* ThreeNormPointBlueprint;
-VERTEX_BLUEPRINT* FourNormPointBlueprint;
-VERTEX_BLUEPRINT* ThreeNormTexPointBlueprint;
-VERTEX_BLUEPRINT* FourNormTexPointBlueprint;
+extern VERTEX_BLUEPRINT* TwoPointBlueprint;
+extern VERTEX_BLUEPRINT* ThreePointBlueprint;
+extern VERTEX_BLUEPRINT* FourPointBlueprint;
+extern VERTEX_BLUEPRINT* TwoTexPointBlueprint;
+extern VERTEX_BLUEPRINT* ThreeTexPointBlueprint;
+extern VERTEX_BLUEPRINT* FourTexPointBlueprint;
+extern VERTEX_BLUEPRINT* ThreeNormPointBlueprint;
+extern VERTEX_BLUEPRINT* FourNormPointBlueprint;
+extern VERTEX_BLUEPRINT* ThreeNormTexPointBlueprint;
+extern VERTEX_BLUEPRINT* FourNormTexPointBlueprint;
 

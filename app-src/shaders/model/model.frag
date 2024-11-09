@@ -1,4 +1,3 @@
-
 #version 330 core
 out vec4 FragColor;
 
@@ -13,8 +12,9 @@ void main() {
     float ambientStrength = 0.3;
     vec3 ambient = ambientStrength * ambientLightColor;
 
-    vec3 objectColor = texture(Tex, TexCoord).rgb;
-//    vec3 objectColor = vec3(1, 1, 1);
+    // vec3 objectColor = texture(Tex, TexCoord).rgb;
+    // vec3 objectColor = vec3(TexCoord, 1.0);
+    vec3 objectColor = vec3(1.0, 1.0, 1.0);
 
     vec3 lightDir = normalize(vec3(1, -4, 1));
     vec3 lightColor = normalize(vec3(1, 1, 0.8));
@@ -32,4 +32,6 @@ void main() {
 //    FragColor = texture(Tex, TexCoord);
 //    FragColor = vec4(1.0);
 //    FragColor = vec4(norm, 1.0);
+    FragColor = vec4(TexCoord, 1.0, 1.0);
+    // FragColor = vec4(1.0, .5, 1.0, 1.0);
 }

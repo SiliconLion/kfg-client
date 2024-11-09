@@ -2,7 +2,7 @@
 #include <stdio.h>
 //#include "helpers.h"
 
-
+vec3 up_dir_global = {0.f, 1.0f, 0.0f}; //global up
 
 Camera camera_new(
         vec3 pos, vec3 look_at_point,
@@ -70,10 +70,6 @@ Camera camera_new(
 
 //call this on the camera any time you set a variable in the camera
 void camera_update(Camera* c) {
-//    mat4x4_perspective(
-//            c->perspective,
-//            c->y_fov, c->aspect, c->near_plane, c->far_plane
-//    );
 
     glm_perspective(
             c->y_fov, c->aspect,
@@ -82,19 +78,33 @@ void camera_update(Camera* c) {
 
 //    hidden_construct_look_at(c->camera_transform, c->pos, c->look_at_point);
 
-    //d represents the direction the camera is looking at.
-    vec3 eye;
-    glm_vec3_sub(c->target, c->pos, eye);
-    glm_vec3_norm(eye);
-    // eye = |look_at_point - pos|
+    // vec3 eye;
+    // glm_vec3_sub(c->target, c->pos, eye);
+    // glm_vec3_norm(eye);
+    // // eye = |look_at_point - pos|
 
-    vec3 up = {0.f, 1.0f, 0.0f}; //global up
-    glm_lookat(eye, c->pos, up, c->view);
+    // vec3 up = {0.f, 1.0f, 0.0f}; //global up
+    // glm_lookat(eye, c->pos, up, c->view);
 
-//    printf("look-at matrix \n");
-//    mat4_print(c->view);
-//
-//    printf("perspective matrix \n");
-//    mat4_print(c->perspective);
+
+    glm_lookat(c->pos, c->target, up_dir_global, c->view);
+
 }
 
+void camera_get_dir(Camera* c, vec3 dest) {
+    glm_vec3_sub(c->target, c->pos, dest);
+    glm_normalize(dest);
+    return;
+}
+
+
+
+void camera_interface_pov_update( f32 delta_u, f32 delta_v, f32 delta_zoom ) {
+
+}
+void camera_interface_orbit_update( f32 delta_u, f32 delta_v, f32 delta_zoom)  {
+
+}
+
+CAMERA_INTERFACE_UPDATE_FN* C_I_POV_UPDATE = camera_interface_pov_update;
+CAMERA_INTERFACE_UPDATE_FN* C_I_ORBIT_UPDATE = camera_interface_orbit_update;

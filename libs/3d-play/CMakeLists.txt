@@ -6,6 +6,7 @@ add_library(threeDplay
         src/dynarr.c
         src/error-handling.c
         src/framebuffer.c
+        src/vertices.c
         src/geometry.c
         src/matrix.c
         src/post-processing-effects.c
@@ -15,10 +16,11 @@ add_library(threeDplay
         src/texture.c
         src/transformation.c
         src/utilities.c
-        src/vertices.c
         )
 #defines GL_SILENCE_DEPRECATION when threeDplay is compiled
 add_compile_definitions(threeDplay GL_SILENCE_DEPRECATION)
+
+target_link_libraries(threeDplay OpenGL::GL)
 
 #links the stb library to three-d-play
 target_link_libraries(threeDplay stb)

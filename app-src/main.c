@@ -31,6 +31,12 @@
 int windowWidth_global, windowHeight_global;
 f32 window_ratio_global;
 
+u32 counter_global;
+
+Camera camera;
+f32 zoom_fac = 1.0;
+f32 movement_speed = 1;
+
 //on a GLFW error, will print the error
 void error_callback(int error, const char* description) {
     fprintf(stderr, "Error: %s\n", description);
@@ -42,6 +48,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     windowWidth_global = width;
     windowHeight_global = height;
     window_ratio_global = (float)width / (float)height;
+
+
+    camera.aspect = window_ratio_global;
+    camera_update(&camera);
 }
 
 //closes the application when escape key is pressed
@@ -50,14 +60,96 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
+    if(key == GLFW_KEY_Z) {
+        camera.y_fov *= 0.95;
+        zoom_fac *= 0.95;
+    }
+    if(key == GLFW_KEY_X) {
+        camera.y_fov *= 1.05;
+        zoom_fac *= 1.05;
+    }
+
+
+    if(key == GLFW_KEY_W) {
+        vec3 dir, delta;
+        camera_get_dir(&camera, dir);
+
+        dir[1] = 0; //set y component to 0
+
+        glm_vec3_scale(dir, zoom_fac*movement_speed, delta);
+
+        glm_vec3_add(camera.pos, delta, camera.pos);
+        glm_vec3_add(camera.target, delta, camera.target);
+
+    }
+    if(key == GLFW_KEY_S) {
+        vec3 dir, delta;
+        camera_get_dir(&camera, dir);
+
+        dir[1] = 0; //set y component to 0
+
+        glm_vec3_scale(dir, -1.0 * zoom_fac*movement_speed, delta);
+
+        glm_vec3_add(camera.pos, delta, camera.pos);
+        glm_vec3_add(camera.target, delta, camera.target);
+    }
+
+    if(key == GLFW_KEY_A) {
+        vec3 dir, delta;
+        camera_get_dir(&camera, dir);
+
+        glm_vec3_cross(up_dir_global, dir, delta);
+        glm_normalize(delta);
+        glm_vec3_scale(delta, movement_speed * zoom_fac, delta);
+        
+
+        glm_vec3_add(camera.pos, delta, camera.pos);
+        glm_vec3_add(camera.target, delta, camera.target);
+
+    }
+    if(key == GLFW_KEY_D) {
+        vec3 dir, delta;
+        camera_get_dir(&camera, dir);
+
+        glm_vec3_cross(up_dir_global, dir, delta);
+        glm_normalize(delta);
+        //multiplying by -1.0 reverses the direction.
+        glm_vec3_scale(delta, -1.0 * movement_speed * zoom_fac, delta);
+        
+
+        glm_vec3_add(camera.pos, delta, camera.pos);
+        glm_vec3_add(camera.target, delta, camera.target);
+
+    }
+
+    if(key == GLFW_KEY_SPACE) {
+        vec3 delta;
+        glm_vec3_scale(up_dir_global, movement_speed * zoom_fac, delta);
+
+        glm_vec3_add(camera.pos, delta, camera.pos);
+        glm_vec3_add(camera.target, delta, camera.target);
+    }
+
+    if(key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT) {
+        vec3 delta;
+        glm_vec3_scale(up_dir_global, -1.0* movement_speed * zoom_fac, delta);
+
+        glm_vec3_add(camera.pos, delta, camera.pos);
+        glm_vec3_add(camera.target, delta, camera.target);
+    }
+
+    camera_update(&camera);
+
 }
 
 
 int main() {
     f32 BOARD_WIDTH = 8.0;
     f32 BOARD_HEIGHT = 2.0;
-    const mat4 IDENTITY;
+    mat4 IDENTITY;
     glm_mat4_identity(IDENTITY);
+
+    counter_global = 0;
 
     //Just plain GLFW window setup and opengl context creation.
     if(!glfwInit()) {
@@ -93,11 +185,11 @@ int main() {
 
 
 
-    bool it_works = DoTheImportThing("assets/scenes/Sponza/glTF/Sponza.gltf");
-    if(it_works) {
-        printf("HUZZAH! Assimp imported a complex gltf file");
+    dynarr models = DoTheImportThing("assets/scenes/Sponza/glTF/Sponza.gltf");
+    if(dynarr_is_zero(&models)) {
+        printf("I weep, for dispite promises made, we could not import a gltf file\n");
     } else {
-        printf("I weep, for dispite promises made, we could not import a gltf file");
+        printf("HUZZAH! Assimp imported a complex gltf file\n");
     }
 
 
@@ -228,19 +320,21 @@ int main() {
 
 
 //TODO: the fact that we need to negate the y component is a bug.
-    vec3 camera_pos = {0.f, -9.f, 0.f};
+    
+
+    f32 camera_path_radius = 10.0 / (1 + counter_global);
+    f32 camera_speed = (1.f / 60.f) * 0.1; //assuming 60fps, .1 meters/second
+    //its bad assumptions, but good ballpark
+
+    vec3 camera_pos = {camera_path_radius, camera_path_radius, camera_path_radius};
     vec3 camera_look_at = {0.f};
-    Camera camera = camera_new(
+    camera = camera_new(
             camera_pos, camera_look_at,
             M_PI_4, // PI/4 rad = 45 degrees
             window_ratio_global,
             0.1f,
             100.f
         );
-
-    f32 camera_path_radius = 14;
-    f32 camera_speed = (1.f / 60.f) * 0.1; //assuming 60fps, .1 meters/second
-    //its bad assumptions, but good ballpark
 
     u64 frames = 0;
 
@@ -261,20 +355,27 @@ int main() {
     }
 
 
+    camera_path_radius = 10.0 / (1 + counter_global);
 
+    f32 c_pos_x = camera_path_radius * sinf(camera_speed * frames);
+    f32 c_pos_y = 12.f;
+    f32 c_pos_z = camera_path_radius * cosf(camera_speed * frames);
+
+    vec3 c_pos = {c_pos_x, c_pos_y, c_pos_z};
+
+    glm_vec3_copy(c_pos, camera.pos);
+    camera.aspect = window_ratio_global;
+
+
+    camera_update(&camera);
 
 
     //the render loop
     while (!glfwWindowShouldClose(window)) {
 
-        f32 c_pos_x = camera_path_radius * sinf(camera_speed * frames);
-        f32 c_pos_y = -12.f; //this should not need to be negative. TODO
-        f32 c_pos_z = camera_path_radius * cosf(camera_speed * frames);
+    
+    camera_path_radius = 10.0 / (1 + counter_global);
 
-        vec3 c_pos = {c_pos_x, c_pos_y, c_pos_z};
-
-        glm_vec3_copy(c_pos, camera.pos);
-        camera.aspect = window_ratio_global;
         camera_update(&camera);
 
 
@@ -308,12 +409,7 @@ int main() {
             );
             GLERROR();
 
-            //draw floor
-            {
-                model_draw_all_instances(&floor, model_matrix_loc);
-                GLERROR();
-            }
-
+            
             //draw walls
             {
                 model_draw_all_instances(&wall, model_matrix_loc);
@@ -337,6 +433,18 @@ int main() {
                     &white_stones_model, white_stones.data, white_stones.len, model_matrix_loc
                 );
             }
+
+
+
+
+            // //draw all models
+            // for(usize i = 0; i < models.len; i++) {
+            //     Model* m = (Model*)dynarr_at(&models, i);
+
+            //     model_draw_instance(m, 0, model_matrix_loc);     
+            //     GLERROR();          
+            // }
+
         }
 
         //present the render to the window and poll events
