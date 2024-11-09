@@ -35,6 +35,7 @@ u32 counter_global;
 
 Camera camera;
 f32 zoom_fac = 1.0;
+f32 rotation_fac = M_PI / 100.0;
 f32 movement_speed = 1;
 
 //on a GLFW error, will print the error
@@ -138,6 +139,69 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         glm_vec3_add(camera.target, delta, camera.target);
     }
 
+    if(key == GLFW_KEY_U) {
+        vec3 dir, axis; 
+        camera_get_dir(&camera, dir);
+
+        glm_vec3_cross(up_dir_global, dir, axis);
+        glm_normalize(axis);
+
+        glm_vec3_rotate(dir, -1.0 * rotation_fac, axis);
+        glm_vec3_add(camera.pos, dir, camera.target);
+
+        //may want to safeguard against ever looking straight up. 
+        //glm says it doesnt handle that
+    
+    }
+    if(key == GLFW_KEY_V) {
+        vec3 dir, axis; 
+        camera_get_dir(&camera, dir);
+
+        glm_vec3_cross(up_dir_global, dir, axis);
+        glm_normalize(axis);
+
+        glm_vec3_rotate(dir, rotation_fac, axis);
+        glm_vec3_add(camera.pos, dir, camera.target);
+
+        //may want to safeguard against ever looking straight up. 
+        //glm says it doesnt handle that
+    }
+
+
+    if(key == GLFW_KEY_I) {
+        vec3 dir, axis; 
+        camera_get_dir(&camera, dir);
+
+        glm_vec3_rotate(dir, rotation_fac, up_dir_global);
+        glm_vec3_add(camera.pos, dir, camera.target);
+
+        //may want to safeguard against ever looking straight up. 
+        //glm says it doesnt handle that
+    }
+
+    if(key == GLFW_KEY_J) {
+        vec3 dir, axis; 
+        camera_get_dir(&camera, dir);
+
+
+        glm_vec3_rotate(dir, -1.0 * rotation_fac, up_dir_global);
+        glm_vec3_add(camera.pos, dir, camera.target);
+
+        //may want to safeguard against ever looking straight up. 
+        //glm says it doesnt handle that
+    }
+
+
+    if(key == GLFW_KEY_ENTER) {
+        printf("Camera stats\n");
+        printf("camera pos: [%f, %f, %f]\n", camera.pos[0], camera.pos[1], camera.pos[2]);
+        printf("camera target: [%f, %f, %f]\n", camera.target[0], camera.target[1], camera.target[2]);
+        printf("camera fov: %f\n", camera.y_fov);
+        printf("camera near plane %f\n", camera.near_plane);
+        printf("camera far plane %f\n", camera.far_plane);
+        printf("\n");
+    }
+
     camera_update(&camera);
 
 }
@@ -205,110 +269,6 @@ int main() {
 
 
 
-    FullGeometry floor_geom_data = prim_new_tex_rect_3d(GL_STATIC_DRAW);
-    FullGeometry floor_geom = add_normals_to_geom(&floor_geom_data);
-    Texture* floor_tex = tex_new("assets/misc-textures/wood-floor-texture.jpg", false);
-    Model floor = model_new(floor_geom, floor_tex);
-
-    mat4 instance;
-    glm_mat4_identity(instance);
-
-
-    glm_mat4_identity(instance);
-    glm_scale(instance, (vec3){20, 20, 20});
-    glm_rotate(instance, M_PI_2, XAXIS);
-    //floor is now a 100x100 plane in x/z, with y = 0.
-
-    printf("floor model matrix: \n");
-    mat4_print(instance);
-    printf("\n");
-
-    dynarr_push(&floor.model_instances, &instance);
-
-    glm_mat4_identity(instance);//clears `instance` cuz we reuse it l8r
-
-
-
-    Texture* wall_tex = tex_new("assets/misc-textures/wallpaper-texture.jpg", false);
-    FullGeometry wall_geom_data = prim_new_tex_rect_3d(GL_STATIC_DRAW);
-    FullGeometry wall_geom = add_normals_to_geom(&wall_geom_data);
-    Model wall = model_new(wall_geom, wall_tex);
-    for(u32 i = 0; i < 8; i++) {
-        glm_mat4_identity(instance);
-
-        glm_translate(instance, (vec3) {0, 0, 15});
-        glm_scale(instance, (vec3) {15, 15, 15});
-
-        //TODO: condence this
-        mat4 test;
-        glm_mat4_identity(test);
-        glm_rotate(test, M_PI_4 * i, YAXIS);
-        printf("test matrix %u \n", i);
-        mat4_print(test);
-        printf("\n");
-
-        glm_mat4_mul(test, instance, instance);
-
-        dynarr_push(&wall.model_instances, &instance);
-    }
-
-    glm_mat4_identity(instance);//clears `instance` cuz we reuse it l8r
-
-    FullGeometry board_geom_data = prim_new_tex_cube(GL_STATIC_DRAW);
-    FullGeometry board_geom = add_normals_to_geom(&board_geom_data);
-    Texture* board_tex = tex_new("assets/misc-textures/light-wood.jpg", false);
-    Model board = model_new(board_geom, board_tex);
-
-    glm_scale(instance, (vec3){BOARD_WIDTH, BOARD_HEIGHT, BOARD_WIDTH});
-
-    dynarr_push(&board.model_instances, &instance);
-
-    mat4 stone_scale;
-    glm_mat4_identity(stone_scale);
-    glm_scale(stone_scale, (vec3){
-        BOARD_WIDTH/26., BOARD_WIDTH/40., BOARD_WIDTH/26.
-    });
-//    glm_scale(stone_scale, (vec3){.5, .5, .5});
-
-    FullGeometry white_stones_geom_data = prim_new_tex_cube(GL_STATIC_DRAW);
-    FullGeometry white_stones_geom = add_normals_to_geom(&white_stones_geom_data);
-    Texture* white_stones_tex = tex_new("assets/misc-textures/white-stone-texture.jpg", false);
-    Model white_stones_model = model_new(white_stones_geom, white_stones_tex);
-
-
-    FullGeometry black_stones_geom_data = prim_new_tex_cube(GL_STATIC_DRAW);
-    FullGeometry black_stones_geom = add_normals_to_geom(&black_stones_geom_data);
-    Texture* black_stones_tex = tex_new("assets/misc-textures/black-stone-texture.jpg", false);
-    Model black_stones_model = model_new(black_stones_geom, black_stones_tex);
-
-
-    dynarr stone_centers = prim_grid_centers(19, 19, 1);
-    for(int i = 0; i < stone_centers.len; i++) {
-        vec3* center = dynarr_at(&stone_centers, i);
-        glm_vec3_scale(center, BOARD_WIDTH / 2., center);
-
-        //moves the stones up to the top of the board
-        //its BOARD_HEIGHT/2 because the board is centered on 0.
-        glm_vec3_add(center, (vec3){0, BOARD_HEIGHT / 2., 0}, center);
-
-
-        mat4 transform;
-        glm_mat4_identity(transform);
-        glm_translate(transform, center);
-        glm_mat4_mul(transform ,stone_scale,transform);
-
-        dynarr_push(&white_stones_model.model_instances, transform);
-        dynarr_push(&black_stones_model.model_instances, transform);
-    }
-
-
-
-
-
-
-
-
-
 
     Shader* model_shader = shad_new("shaders/model/model.vert", "shaders/model/model.frag");
     GLERROR();
@@ -319,64 +279,26 @@ int main() {
 
 
 
-//TODO: the fact that we need to negate the y component is a bug.
-    
 
-    f32 camera_path_radius = 10.0 / (1 + counter_global);
-    f32 camera_speed = (1.f / 60.f) * 0.1; //assuming 60fps, .1 meters/second
-    //its bad assumptions, but good ballpark
-
-    vec3 camera_pos = {camera_path_radius, camera_path_radius, camera_path_radius};
-    vec3 camera_look_at = {0.f};
-    camera = camera_new(
-            camera_pos, camera_look_at,
-            M_PI_4, // PI/4 rad = 45 degrees
-            window_ratio_global,
-            0.1f,
-            100.f
-        );
-
-    u64 frames = 0;
 
     glDisable(GL_CULL_FACE);
 
 
 
-    //"game code"
-    dynarr black_stones = dynarr_new(sizeof(u32), 19 * 19);
-    dynarr white_stones = dynarr_new(sizeof(u32), 19 * 19);
-    for(u32 i = 0; i < 19 * 19; i++) {
-        f32 r = norm_rand();
-        if (r < 0.2) {
-            dynarr_push(&black_stones, &i);
-        } else if( r < 0.4) {
-            dynarr_push(&white_stones, &i);
-        } //else no stone
-    }
-
-
-    camera_path_radius = 10.0 / (1 + counter_global);
-
-    f32 c_pos_x = camera_path_radius * sinf(camera_speed * frames);
-    f32 c_pos_y = 12.f;
-    f32 c_pos_z = camera_path_radius * cosf(camera_speed * frames);
-
-    vec3 c_pos = {c_pos_x, c_pos_y, c_pos_z};
-
-    glm_vec3_copy(c_pos, camera.pos);
+    glm_vec3_copy((vec3){-14.915992, 104.215508, -0.615611}, camera.pos);
+    glm_vec3_copy((vec3){-13.920774, 104.313194, -0.615634}, camera.target);
+    camera.y_fov = 0.954656;
+    camera.near_plane = 0.100000; 
+    camera.far_plane = 1500.000000;
     camera.aspect = window_ratio_global;
-
 
     camera_update(&camera);
 
 
+    u64 frames = 0;
+
     //the render loop
     while (!glfwWindowShouldClose(window)) {
-
-    
-    camera_path_radius = 10.0 / (1 + counter_global);
-
-        camera_update(&camera);
 
 
         //just clears the screen for rendering
@@ -410,40 +332,40 @@ int main() {
             GLERROR();
 
             
-            //draw walls
-            {
-                model_draw_all_instances(&wall, model_matrix_loc);
+//             //draw walls
+//             {
+//                 model_draw_all_instances(&wall, model_matrix_loc);
 
-            }
+//             }
 
-            //draw board
-            {
-                model_draw_all_instances(&board, model_matrix_loc);
-            }
+//             //draw board
+//             {
+//                 model_draw_all_instances(&board, model_matrix_loc);
+//             }
 
-            //draw stones
-            {
-//                model_draw_all_instances(&white_stones, model_matrix_loc);
-//                model_draw_all_instances(&black_stones_model, model_matrix_loc);
-                model_draw_instance_list(
-                    &black_stones_model, black_stones.data, black_stones.len, model_matrix_loc
-                );
+//             //draw stones
+//             {
+// //                model_draw_all_instances(&white_stones, model_matrix_loc);
+// //                model_draw_all_instances(&black_stones_model, model_matrix_loc);
+//                 model_draw_instance_list(
+//                     &black_stones_model, black_stones.data, black_stones.len, model_matrix_loc
+//                 );
 
-                model_draw_instance_list(
-                    &white_stones_model, white_stones.data, white_stones.len, model_matrix_loc
-                );
-            }
+//                 model_draw_instance_list(
+//                     &white_stones_model, white_stones.data, white_stones.len, model_matrix_loc
+//                 );
+//             }
 
 
 
 
             // //draw all models
-            // for(usize i = 0; i < models.len; i++) {
-            //     Model* m = (Model*)dynarr_at(&models, i);
+            for(usize i = 0; i < models.len; i++) {
+                Model* m = (Model*)dynarr_at(&models, i);
 
-            //     model_draw_instance(m, 0, model_matrix_loc);     
-            //     GLERROR();          
-            // }
+                model_draw_instance(m, 0, model_matrix_loc);     
+                GLERROR();          
+            }
 
         }
 
