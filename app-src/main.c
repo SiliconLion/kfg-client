@@ -312,7 +312,7 @@ int main() {
     //begin drawing models
         {
             shad_bind(model_shader);
-            GLERROR();
+            // GLERROR();
 
             //bind view matrix
             glUniformMatrix4fv(
@@ -321,7 +321,7 @@ int main() {
                     GL_FALSE,// column major order
                     camera.view
             );
-            GLERROR();
+            // GLERROR();
             //bind perspective matrix
             glUniformMatrix4fv(
                     model_perspective_loc,
@@ -329,7 +329,7 @@ int main() {
                     GL_FALSE,// column major order
                     camera.perspective
             );
-            GLERROR();
+            // GLERROR();
 
             
 //             //draw walls
@@ -364,7 +364,7 @@ int main() {
                 Model* m = (Model*)dynarr_at(&models, i);
 
                 model_draw_instance(m, 0, model_matrix_loc);     
-                GLERROR();          
+                // GLERROR();          
             }
 
         }
@@ -373,7 +373,7 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        GLERROR();
+        // GLERROR();
 
         frames += 1;
 

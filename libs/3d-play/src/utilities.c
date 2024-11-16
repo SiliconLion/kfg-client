@@ -1,5 +1,8 @@
 #include "utilities.h"
 
+#include <string.h>
+#include <stddef.h> 
+
 //path is a null terminated string of the file path
 //sets length to be length of the file in bytes. Pass in NULL to ignore this 
 char * readFile(const char* path, int* length) {
@@ -89,4 +92,19 @@ inline float norm_rand() { return (float)rand() / (float)RAND_MAX;}
 
 void printf_triple_f(float* t) {
     printf("[ %f, %f, %f ]", *t, *(t+1), *(t+2));
+}
+
+
+//TODO error_checking?
+char * get_dir_from_file_path(char* file_path) {
+    //TODO: Support other file seperators
+    char * last_seperator = strrchr(file_path, '/');
+    if(!last_seperator) {
+        printf("error in \'get_dir_from_file_path\'\n");
+        exit(-1);
+    }
+    ptrdiff_t diff = last_seperator - file_path; 
+    char * dir = calloc(diff + 1, sizeof(char)); //+1 for '\0'
+    strncat(dir, file_path, diff);
+    return dir;
 }

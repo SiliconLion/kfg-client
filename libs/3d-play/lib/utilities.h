@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 
+
 //path is a null terminated string of the file path
 //sets length to be length of the file in bytes. Pass in NULL to ignore this 
 char * readFile(const char* path, int* length);
@@ -28,6 +29,9 @@ float norm_rand();
 
 void printf_triple_f(float* t);
 
+char * get_dir_from_file_path(char* file_path);
+
+
 //TODO: doesn't quite work i dont think
 //takes the expression `expr` of type `type` and allocates it on the heap 
 // #define HEAPIFY(type, expr) \
@@ -36,3 +40,4 @@ void printf_triple_f(float* t);
 //         *ptr = expr; \
 //         return ptr; \
 //     }while(0)
+

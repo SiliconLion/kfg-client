@@ -6,6 +6,7 @@
 #include "vertices.h"
 #include "geometry.h"
 #include "texture.h"
+#include "utilities.h"
 
 #ifdef __APPLE__
     #include <OpenGL/gl3.h>
@@ -131,7 +132,44 @@ dynarr DoTheImportThing( const char* pFile) {
 
         // Todo: handle materials and textures
 
-        Model m = model_new(geom, NULL); //When we handle materials, this will be modified.
+        struct aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+
+        // aiGetMaterialProperty(material, AI_MATKEY_NAME, )
+        printf("Material with index %u has the following textures:\n", mesh->mMaterialIndex);
+
+        //looping through every variant in aiTextureType
+        for(u32 i = 0; i < AI_TEXTURE_TYPE_MAX; i++) {
+            u32 tex_count = aiGetMaterialTextureCount(material, i);
+            const char* tex_name = aiTextureTypeToString(i);
+            printf("    %u %s textures.\n", tex_count, tex_name);
+        }
+
+        Texture* diffuse_tex;
+
+        struct aiString rel_tex_path;
+        enum aiReturn ret = aiGetMaterialTexture(
+            material, aiTextureType_DIFFUSE, 0,  
+            &rel_tex_path, 
+            NULL, NULL, NULL, NULL, NULL, NULL
+            );
+        if(ret != aiReturn_SUCCESS) {
+            printf("failed to get diffuse texture from scene for mesh %u\n", mesh_idx);
+            diffuse_tex = NULL;
+        } else {
+            char * dir = get_dir_from_file_path(pFile);
+
+            u32 full_path_len = strlen(dir) + strlen(rel_tex_path.data) + 1 + 1; //+1 for '/' and +1 for '\0'
+            char * full_tex_path = calloc(full_path_len, sizeof(char));
+            strcat(full_tex_path, dir);
+            strcat(full_tex_path, "/"); 
+            strcat(full_tex_path, rel_tex_path.data);
+
+            //TODO: Detect alpha
+            diffuse_tex = tex_new(full_tex_path, false);
+        }
+         
+
+        Model m = model_new(geom, diffuse_tex); //When we handle materials, this will be modified.
         dynarr_push(&m.model_instances, IDENTITY);
 
         dynarr_push(&models, &m);
