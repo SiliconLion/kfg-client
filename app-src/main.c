@@ -22,6 +22,7 @@
 #include "helpers.h"
 #include "dreadful-hacks.h"
 #include "scene.h"
+#include "material.h"
 
 #define CGLM_DEFINE_PRINTS
 #include "cglm/cglm.h"
@@ -245,12 +246,13 @@ int main() {
     //to avoid screen tearing.
     glfwSwapInterval(1);
 
+    i32 MaxTextureImageUnits = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &MaxTextureImageUnits); 
+    printf("this device has %i MaxTextureImageUnits.\n", MaxTextureImageUnits);
 
-
-
-
-    dynarr models = DoTheImportThing("assets/scenes/Sponza/glTF/Sponza.gltf");
-    if(dynarr_is_zero(&models)) {
+    Scene scene;
+    int ret = scene_from_file(&scene, "assets/scenes/Sponza/glTF/Sponza.gltf");
+    if(ret != 1) {
         printf("I weep, for dispite promises made, we could not import a gltf file\n");
     } else {
         printf("HUZZAH! Assimp imported a complex gltf file\n");
@@ -275,7 +277,21 @@ int main() {
     u32 model_matrix_loc = glGetUniformLocation(model_shader->program, "model");
     u32 model_view_loc = glGetUniformLocation(model_shader->program, "view");
     u32 model_perspective_loc = glGetUniformLocation(model_shader->program, "perspective");
+
+    u32 model_sampler_locs[PBR_CHANNEL_COUNT];
+    for(u32 i = 0; i < PBR_CHANNEL_COUNT; i++) {
+        const char* channel_str = PBRTextureChannelToStr( (PBRTextureChannel)i );
+        model_sampler_locs[i] = glGetUniformLocation(model_shader->program,  channel_str);
+        if(model_sampler_locs[i] == -1) {
+            printf("Could not find uniform \"%s\" in the shader. Either this is an error in the shader, or this channel is not being used, so it has been optimized out and thus cannot be found.\n", channel_str);
+            // exit(-1);
+        }
+    }
     GLERROR();
+
+
+    
+    
 
 
 
@@ -329,39 +345,17 @@ int main() {
                     GL_FALSE,// column major order
                     camera.perspective
             );
-            // GLERROR();
-
-            
-//             //draw walls
-//             {
-//                 model_draw_all_instances(&wall, model_matrix_loc);
-
-//             }
-
-//             //draw board
-//             {
-//                 model_draw_all_instances(&board, model_matrix_loc);
-//             }
-
-//             //draw stones
-//             {
-// //                model_draw_all_instances(&white_stones, model_matrix_loc);
-// //                model_draw_all_instances(&black_stones_model, model_matrix_loc);
-//                 model_draw_instance_list(
-//                     &black_stones_model, black_stones.data, black_stones.len, model_matrix_loc
-//                 );
-
-//                 model_draw_instance_list(
-//                     &white_stones_model, white_stones.data, white_stones.len, model_matrix_loc
-//                 );
-//             }
 
 
-
+            //this is required to use the pbr materials
+            shad_bind(model_shader);
+            for(u32 i = 0; i < PBR_CHANNEL_COUNT; i++) {
+                glUniform1i(model_sampler_locs[i], GL_TEXTURE0 + i);
+            }
 
             // //draw all models
-            for(usize i = 0; i < models.len; i++) {
-                Model* m = (Model*)dynarr_at(&models, i);
+            for(usize i = 0; i < scene.models.len; i++) {
+                Model* m = (Model*)dynarr_at(&scene.models, i);
 
                 model_draw_instance(m, 0, model_matrix_loc);     
                 // GLERROR();          

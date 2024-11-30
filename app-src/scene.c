@@ -7,14 +7,44 @@
 #include "geometry.h"
 #include "texture.h"
 #include "utilities.h"
+#include "material.h"
 
 #ifdef __APPLE__
     #include <OpenGL/gl3.h>
 #endif
 
 
+Texture* tex_from_ai_mat(struct aiMaterial* material, const char * directory_of_scene, PBRTextureChannel channel) {
+        //just a little rename for simplicity in the code
+        const char * dir = directory_of_scene;
 
-dynarr DoTheImportThing( const char* pFile) {
+        enum aiTextureType tex_type = PBRTextureChannelToAI(channel);
+
+        struct aiString rel_tex_path;
+        enum aiReturn ret = aiGetMaterialTexture(
+            material, tex_type, 0,  
+            &rel_tex_path, 
+            NULL, NULL, NULL, NULL, NULL, NULL
+            );
+        if(ret != aiReturn_SUCCESS) {
+            printf("failed to get %s texture from material\n", PBRTextureChannelToStr(channel));
+            return NULL;
+        } else {
+
+            u32 full_path_len = strlen(dir) + strlen(rel_tex_path.data) + 1 + 1; //+1 for '/' and +1 for '\0'
+            char * full_tex_path = calloc(full_path_len, sizeof(char));
+            strcat(full_tex_path, dir);
+            strcat(full_tex_path, "/"); 
+            strcat(full_tex_path, rel_tex_path.data);
+
+            //TODO: Detect alpha
+            return tex_new(full_tex_path, false);
+        }
+}
+
+
+
+int scene_from_file(Scene* dest, const char* pFile) {
     const mat4 IDENTITY;
     glm_mat4_identity(IDENTITY);
 
@@ -40,7 +70,7 @@ dynarr DoTheImportThing( const char* pFile) {
 //        }
     //        we've validated that the string is okay to print, dispite not being a str litterals
         printf("Assimp errored: %s\n", err_msg);
-        return DYNARR_ZERO;
+        return -1; //ToDo: return better error?
     }
 
     printf("Scene has %u meshes.\n", scene->mNumMeshes);
@@ -67,7 +97,7 @@ dynarr DoTheImportThing( const char* pFile) {
     if(curr_node->mNumChildren >= 1) {
         //recurse 
         printf("cannot handle multiple children yet");
-        return DYNARR_ZERO;
+        return -1; //ToDo: return better error?
 
         //When not in the root node, we need to keep track of the relative transformations of each node
     }
@@ -79,13 +109,15 @@ dynarr DoTheImportThing( const char* pFile) {
     C_STRUCT aiMatrix4x4 curr_transformation = curr_node->mTransformation;
 
     dynarr models = dynarr_new(sizeof(Model), curr_node->mNumMeshes);
+    dynarr materials = dynarr_new(sizeof(PBRMaterial*), scene->mNumMaterials);
+
     for(u32 i = 0; i < curr_node->mNumMeshes; i++) {
         u32 mesh_idx = curr_node->mMeshes[i];
         struct aiMesh* mesh = scene->mMeshes[i];
 
         if(mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
             printf("mesh contains non-triangle vertices");
-            return DYNARR_ZERO;
+            return -1; //ToDo: return better error?
         }
 
 
@@ -130,11 +162,25 @@ dynarr DoTheImportThing( const char* pFile) {
             GL_TRIANGLES, GL_STATIC_DRAW
         );
 
-        // Todo: handle materials and textures
+        //handle materials and textures
+        //ToDo: dont duplicate materials
 
         struct aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-        // aiGetMaterialProperty(material, AI_MATKEY_NAME, )
+        PBRMaterial* mat = malloc(sizeof(PBRMaterial));
+
+        
+
+        //get material name.
+        struct aiString name;
+        aiReturn ret = aiGetMaterialString(material, AI_MATKEY_NAME,&name);
+        if(ret != aiReturn_SUCCESS) {
+            printf("cannot get name of material? index is %u\n", mesh->mMaterialIndex);
+        } else {
+            mat->name = calloc(name.length + 1, 1); //gets the '\0'
+            memcpy(mat->name, name.data, name.length); 
+        }
+
         printf("Material with index %u has the following textures:\n", mesh->mMaterialIndex);
 
         //looping through every variant in aiTextureType
@@ -144,40 +190,27 @@ dynarr DoTheImportThing( const char* pFile) {
             printf("    %u %s textures.\n", tex_count, tex_name);
         }
 
-        Texture* diffuse_tex;
 
-        struct aiString rel_tex_path;
-        enum aiReturn ret = aiGetMaterialTexture(
-            material, aiTextureType_DIFFUSE, 0,  
-            &rel_tex_path, 
-            NULL, NULL, NULL, NULL, NULL, NULL
-            );
-        if(ret != aiReturn_SUCCESS) {
-            printf("failed to get diffuse texture from scene for mesh %u\n", mesh_idx);
-            diffuse_tex = NULL;
-        } else {
-            char * dir = get_dir_from_file_path(pFile);
 
-            u32 full_path_len = strlen(dir) + strlen(rel_tex_path.data) + 1 + 1; //+1 for '/' and +1 for '\0'
-            char * full_tex_path = calloc(full_path_len, sizeof(char));
-            strcat(full_tex_path, dir);
-            strcat(full_tex_path, "/"); 
-            strcat(full_tex_path, rel_tex_path.data);
 
-            //TODO: Detect alpha
-            diffuse_tex = tex_new(full_tex_path, false);
+        const char* dir = get_dir_from_file_path(pFile);
+        for(u32 i = 0; i < PBR_CHANNEL_COUNT; i++) {
+            mat->channels[i] = tex_from_ai_mat(material, dir, (PBRTextureChannel)i );
         }
-         
+        dynarr_push(&materials, &mat);
+        
 
-        Model m = model_new(geom, diffuse_tex); //When we handle materials, this will be modified.
+        Model m = model_new(geom, mat); //When we handle materials, this will be modified.
         dynarr_push(&m.model_instances, IDENTITY);
 
         dynarr_push(&models, &m);
     }
 
+    dest->models = models;
+    dest->materials = materials;
 
     // We're done. Release all resources associated with this import
     aiReleaseImport( scene);
 
-    return models;
+    return 1;
 }

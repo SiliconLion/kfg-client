@@ -4,7 +4,9 @@
 #include "dynarr.h"
 #include "geometry.h"
 #include "texture.h"
+#include "material.h"
 #include <cglm/cglm.h>
+
 
 //Can kinda do a poor-man's single inheritance by having a struct include Model as it's first
 //member. Because C's data repr. follows the order of declaration, you can just cast a pointer
@@ -22,14 +24,13 @@ typedef struct {
     //world coordinates.
     dynarr model_instances;
 
-    //eventually will probably be multiple textures (optional), but for now, we will do one
-    //optional texture. If null, no texture.
-    Texture* tex;
+    //eventually might be other kinds of materials, but PBR for now
+    PBRMaterial* mat;
 
 } Model;
 
 //tex can be null
-Model model_new(FullGeometry geom, Texture* tex);
+Model model_new(FullGeometry geom, PBRMaterial* mat);
 
 //Model model_from_stl_file(const char* path);
 

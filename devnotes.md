@@ -14,3 +14,5 @@ definitions and will expand over time. But may eventually include some configura
 10/29/24 - David S- remember to run cmake whenever updating shaders cuz they're in the assets folder, and the 
 updated version wont get copied unless you do. 
 TODO: make it so CMake always checks for changes in the assets folder
+
+11/29/24 - David S- The way the PBRTextureChannel's are used is pretty slick but also a little fragile. 

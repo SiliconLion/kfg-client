@@ -10,11 +10,11 @@ uniform mat4x4 perspective; //camera coords -> clip coords
 uniform sampler2D Tex;
 
 out vec3 FragPos;
-out vec3 norm;
+out vec3 VertexNorm;
 out vec2 TexCoord;
 
 void main() {
-    norm = normalize(aNorm);
+    VertexNorm = normalize(aNorm); //probably already normalized but nice to be safe. could omit for speed.
     TexCoord = aTexCoord;
     FragPos = vec3(model * vec4(aPos, 1.0));
 

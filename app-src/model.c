@@ -1,10 +1,10 @@
 
 #include "model.h"
 
-Model model_new(FullGeometry geom, Texture* tex) {
+Model model_new(FullGeometry geom, PBRMaterial* mat) {
     dynarr model_instances = dynarr_new(sizeof(mat4), 1);
     return (Model){
-        .geom = geom, .model_instances = model_instances, .tex = tex
+        .geom = geom, .model_instances = model_instances, .mat = mat
     };
 }
 
@@ -18,8 +18,8 @@ void model_draw_instance(Model* m, u32 selected,  u32 model_matrix_loc) {
             **instance
     );
 
-    if(m->tex) {
-        tex_bind(m->tex, 0);
+    if(m->mat) {
+        PBRMaterialBind(m->mat, 0);
     }
 
     full_geom_draw(&m->geom);

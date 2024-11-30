@@ -32,6 +32,7 @@ void tex_unbind() {
 Texture * tex_new(const char * path, bool alpha) {
     stbi_set_flip_vertically_on_load(true); 
 
+    //TODO, change the API so that not allcating on the heap for like, no reason.
     Texture * texture = calloc(1, sizeof(Texture));
     unsigned char* data = stbi_load(
         path, 

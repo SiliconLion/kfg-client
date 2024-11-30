@@ -9,5 +9,10 @@
 #include "dynarr.h"
 
 
-//Returns a dynarr<Model> of all the models in the scene. Returns DYNARR_ZERO on error
-dynarr DoTheImportThing( const char* pFile);
+typedef struct {
+    dynarr models; //dynarr<Model>
+    dynarr materials; //dynarr<Material*>
+} Scene;
+
+//returns -1 on error, 1 on success 
+int scene_from_file(Scene* dest, const char* path);
