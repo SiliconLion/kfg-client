@@ -19,7 +19,7 @@ void model_draw_instance(Model* m, u32 selected,  u32 model_matrix_loc) {
     );
 
     if(m->mat) {
-        PBRMaterialBind(m->mat, 0);
+        PBRMaterialBind(m->mat);
     }
 
     full_geom_draw(&m->geom);

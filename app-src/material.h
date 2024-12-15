@@ -49,7 +49,7 @@ typedef struct {
 
 
 //note, the pbr model shader has to have its sampler uniforms set already for this function to work
-void PBRMaterialBind(PBRMaterial* mat, Shader* shad);
+void PBRMaterialBind(PBRMaterial* mat);
 
 // void PBRMaterialUnbind();
 

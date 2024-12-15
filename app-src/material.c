@@ -34,9 +34,9 @@ const char* PBRTextureChannelToStr(PBRTextureChannel c) {
         // case PBR_CHANNEL_EMISSION_COLOR :
         //     return "emmision_color";
         // case PBR_CHANNEL_METALNESS :
-        //     return "metalness";
+        //     return "METALNESS";
         case PBR_CHANNEL_DIFFUSE_ROUGHNESS :
-            return "roughness";
+            return "ROUGHNESS";
         // case PBR_CHANNEL_AMBIENT_OCCLUSION :
         //     return "ambient_occlusion";
         // case PBR_CHANNEL_UNKNOWN :
@@ -77,14 +77,10 @@ enum aiTextureType PBRTextureChannelToAI(PBRTextureChannel channel){
 
 
 
-void PBRMaterialBind(PBRMaterial* mat, Shader* shad) {
+void PBRMaterialBind(PBRMaterial* mat) {
     for(u32 i = 0; i < PBR_CHANNEL_COUNT; i++) {
         Texture* channel = mat->channels[i];
-        if(channel == NULL) {continue;}
-        // //TODO: refactor this so we dont need to query this every call
-        // const char * channel_name = PBRTextureChannelToStr( (PBRTextureChannel)i );
-        // glGetUniformLocation(shad->program, channel_name);
-        
+        if(channel == NULL) {continue;} 
         tex_bind(channel, i);
     }
 }

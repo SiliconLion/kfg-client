@@ -41,6 +41,34 @@ Texture* tex_from_ai_mat(struct aiMaterial* material, const char * directory_of_
             return tex_new(full_tex_path, false);
         }
 }
+PBRMaterial load_material_from_aiMaterial(struct aiMaterial* aiMat, const char* path_to_scene) {
+    PBRMaterial mat;
+
+        //get material name.
+        struct aiString name;
+        aiReturn ret = aiGetMaterialString(aiMat, AI_MATKEY_NAME,&name);
+        if(ret != aiReturn_SUCCESS) {
+            printf("cannot get name of material");
+        } else {
+            mat.name = calloc(name.length + 1, 1); //gets the '\0'
+            memcpy(mat.name, name.data, name.length); 
+        }
+
+        printf("Material \'%s\'  has the following textures:\n", mat.name);
+
+        //looping through every variant in aiTextureType
+        for(u32 i = 0; i < AI_TEXTURE_TYPE_MAX; i++) {
+            u32 tex_count = aiGetMaterialTextureCount(aiMat, i);
+            const char* tex_name = aiTextureTypeToString(i);
+            printf("    %u %s textures.\n", tex_count, tex_name);
+        }
+
+        const char* dir = get_dir_from_file_path(path_to_scene);
+        for(u32 i = 0; i < PBR_CHANNEL_COUNT; i++) {
+            mat.channels[i] = tex_from_ai_mat(aiMat, dir, (PBRTextureChannel)i );
+        }
+        return mat;
+}
 
 
 
@@ -81,7 +109,18 @@ int scene_from_file(Scene* dest, const char* pFile) {
     printf("Scene has %u skeletons.\n", scene->mNumSkeletons);
     printf("Scene has %u animations.\n", scene->mNumAnimations);
 
-    // Now we can access the file's contents
+
+//Load all materials
+    dynarr materials = dynarr_new(sizeof(PBRMaterial), scene->mNumMaterials); 
+    for(u32 i = 0; i < scene->mNumMaterials; i++) {
+        struct aiMaterial* aiMat = scene->mMaterials[i];
+        PBRMaterial mat = load_material_from_aiMaterial(aiMat, pFile);
+        dynarr_push(&materials, &mat);
+    }
+
+
+//Load meshes
+
     struct aiNode* root_node = scene->mRootNode;
     struct aiNode* curr_node;
 
@@ -109,7 +148,7 @@ int scene_from_file(Scene* dest, const char* pFile) {
     C_STRUCT aiMatrix4x4 curr_transformation = curr_node->mTransformation;
 
     dynarr models = dynarr_new(sizeof(Model), curr_node->mNumMeshes);
-    dynarr materials = dynarr_new(sizeof(PBRMaterial*), scene->mNumMaterials);
+    
 
     for(u32 i = 0; i < curr_node->mNumMeshes; i++) {
         u32 mesh_idx = curr_node->mMeshes[i];
@@ -160,47 +199,14 @@ int scene_from_file(Scene* dest, const char* pFile) {
             sizeof(ThreeNormTexPoint),
             vertices, indices,
             GL_TRIANGLES, GL_STATIC_DRAW
-        );
-
-        //handle materials and textures
-        //ToDo: dont duplicate materials
-
-        struct aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-
-        PBRMaterial* mat = malloc(sizeof(PBRMaterial));
-
+        );      
         
+        u32 mat_idx = mesh->mMaterialIndex;
+        printf("mat_idx = %u\n", mat_idx);
+        PBRMaterial* mat_ptr = (PBRMaterial*) dynarr_at(&materials, mat_idx);
+        printf("mat_ptr = %p\n", (void*)mat_ptr);
 
-        //get material name.
-        struct aiString name;
-        aiReturn ret = aiGetMaterialString(material, AI_MATKEY_NAME,&name);
-        if(ret != aiReturn_SUCCESS) {
-            printf("cannot get name of material? index is %u\n", mesh->mMaterialIndex);
-        } else {
-            mat->name = calloc(name.length + 1, 1); //gets the '\0'
-            memcpy(mat->name, name.data, name.length); 
-        }
-
-        printf("Material with index %u has the following textures:\n", mesh->mMaterialIndex);
-
-        //looping through every variant in aiTextureType
-        for(u32 i = 0; i < AI_TEXTURE_TYPE_MAX; i++) {
-            u32 tex_count = aiGetMaterialTextureCount(material, i);
-            const char* tex_name = aiTextureTypeToString(i);
-            printf("    %u %s textures.\n", tex_count, tex_name);
-        }
-
-
-
-
-        const char* dir = get_dir_from_file_path(pFile);
-        for(u32 i = 0; i < PBR_CHANNEL_COUNT; i++) {
-            mat->channels[i] = tex_from_ai_mat(material, dir, (PBRTextureChannel)i );
-        }
-        dynarr_push(&materials, &mat);
-        
-
-        Model m = model_new(geom, mat); //When we handle materials, this will be modified.
+        Model m = model_new(geom, mat_ptr); 
         dynarr_push(&m.model_instances, IDENTITY);
 
         dynarr_push(&models, &m);
