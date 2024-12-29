@@ -1,9 +1,8 @@
 #define GL_SILENCE_DEPRECATION
 
-#ifdef __APPLE__
-#include <OpenGL/gl3.h>
-#include <GLFW/glfw3.h>
-#endif
+#include "platform.h"
+
+# INCLUDE_OPENGL
 
 #include "omni-include.h"
 

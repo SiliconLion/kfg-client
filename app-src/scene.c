@@ -8,9 +8,9 @@
 #include "texture.h"
 #include "utilities.h"
 
-#ifdef __APPLE__
-    #include <OpenGL/gl3.h>
-#endif
+#include "platform.h"
+
+INCLUDE_OPENGL
 
 
 

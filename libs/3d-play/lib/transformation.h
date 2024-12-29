@@ -1,8 +1,7 @@
 #pragma once
+#include "platform.h"
 
-#ifdef __APPLE__
-    #include <OpenGL/gl3.h>
-#endif
+INCLUDE_OPENGL
 
 #include <math.h>
 #include "matrix.h"

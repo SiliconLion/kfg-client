@@ -1,7 +1,8 @@
 #pragma once
-#ifdef __APPLE__
-    #include <OpenGL/gl3.h>
-#endif
+#include "platform.h"
+
+INCLUDE_OPENGL
+
 #include <inttypes.h>
 
 //TODO: Support renderbuffer attachments, not just texture attachments

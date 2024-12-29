@@ -1,0 +1,3 @@
+C:/mingw64/bin/ccache.exe C:\mingw64\bin\cmake.exe -E rm -f CMakeFiles\cglm.dir/objects.a
+C:/mingw64/bin/ccache.exe C:\mingw64\bin\ar.exe qc CMakeFiles\cglm.dir/objects.a @CMakeFiles\cglm.dir\objects1.rsp
+C:/mingw64/bin/ccache.exe C:\mingw64\bin\gcc.exe -O2 -g -DNDEBUG -shared -o libcglm-0.dll -Wl,--out-implib,libcglm.dll.a -Wl,--major-image-version,0,--minor-image-version,9 -Wl,--whole-archive CMakeFiles\cglm.dir/objects.a -Wl,--no-whole-archive @CMakeFiles\cglm.dir\linkLibs.rsp

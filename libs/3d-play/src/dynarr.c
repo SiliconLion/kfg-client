@@ -92,7 +92,7 @@ void dynarr_flood(dynarr* self, size_t count, void* pattern) {
         memset(self->data, 0, count * self->stride);
     } else {
         for(size_t i = 0; i < count; i++) {
-            memcpy(self->data + (i * self->stride), pattern, self->stride);
+            memcpy(((char*)self->data) + (i * self->stride), pattern, self->stride);
         }
     }
     self->len = count;
@@ -101,11 +101,11 @@ void dynarr_flood(dynarr* self, size_t count, void* pattern) {
 
 //returns a pointer to the element at index
 void * dynarr_at(dynarr * self, size_t index) {
-    return self->data + (index * self->stride);
+    return ((char*)self->data) + (index * self->stride);
 }
 
 void dynarr_cpy_into(dynarr * self, size_t index, void* dest) {
-    void * element = self->data + (index * self->stride);
+    void * element = ((char*)self->data) + (index * self->stride);
     memcpy(dest, element, self->stride);
 }
 

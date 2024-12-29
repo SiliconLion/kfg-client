@@ -1,7 +1,7 @@
 #pragma once
-#ifdef __APPLE__
-    #include <OpenGL/gl3.h>
-#endif
+#include "platform.h"
+
+INCLUDE_OPENGL
 
 #include <stdlib.h>
 #include <stdbool.h>

@@ -26,6 +26,7 @@ target_link_libraries(threeDplay OpenGL::GL)
 target_link_libraries(threeDplay stb)
 #links the cglm library to three-d-play
 target_link_libraries(threeDplay cglm)
+target_link_libraries(threeDplay glad)
 
 #exports the headers for three-d-play
 target_include_directories(threeDplay

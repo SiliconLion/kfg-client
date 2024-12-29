@@ -2,8 +2,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 
 //path is a null terminated string of the file path

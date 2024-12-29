@@ -14,3 +14,5 @@ definitions and will expand over time. But may eventually include some configura
 10/29/24 - David S- remember to run cmake whenever updating shaders cuz they're in the assets folder, and the 
 updated version wont get copied unless you do. 
 TODO: make it so CMake always checks for changes in the assets folder
+
+12/28/24 - David S- working on getting this to build on windows. ASSIMP has an error when building with mingw. The suggested fix was to add a line `set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "[Assimp] Treat all warnings as errors.")` in the assimp cmake file. I added it to line 43. Hasnt done the trick yet but leaving it for the moment cuz I gotta go home. 

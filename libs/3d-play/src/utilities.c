@@ -2,6 +2,10 @@
 
 #include <string.h>
 #include <stddef.h> 
+#ifdef _WIN32 
+    #include <direct.h>
+    #define getcwd _getcwd
+#endif
 
 //path is a null terminated string of the file path
 //sets length to be length of the file in bytes. Pass in NULL to ignore this 
@@ -50,7 +54,7 @@ int8_t * readBytes(const char* path, int* count) {
     fseek(file, 0, SEEK_END);
     int size = ftell(file);
 
-    int8_t * bytes = calloc(sizeof(int8_t), size);
+    int8_t * bytes = (int8_t*)calloc(sizeof(int8_t), size);
 
     fseek(file, 0, 0);
     fread(bytes, sizeof(int8_t), size, file); 

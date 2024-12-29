@@ -68,7 +68,7 @@ void trans_send_uniform(GLint location, transform trans) {
                 1,
                 //because it is in row major order, we set transpose to true.
                 GL_TRUE,
-                &(trans.elements)
+                (GLfloat*)&(trans.elements)
         );
 }
 
