@@ -167,9 +167,33 @@ dynarr DoTheImportThing( const char* pFile) {
             //TODO: Detect alpha
             diffuse_tex = tex_new(full_tex_path, false);
         }
+
+        Texture* normals_tex;
+
+        ret = aiGetMaterialTexture(
+            material, aiTextureType_NORMALS, 0,  
+            &rel_tex_path, 
+            NULL, NULL, NULL, NULL, NULL, NULL
+            );
+        if(ret != aiReturn_SUCCESS) {
+            printf("failed to get normals texture from scene for mesh %u\n", mesh_idx);
+            normals_tex = NULL;
+        } else {
+            char * dir = get_dir_from_file_path(pFile);
+
+            u32 full_path_len = strlen(dir) + strlen(rel_tex_path.data) + 1 + 1; //+1 for '/' and +1 for '\0'
+            char * full_tex_path = calloc(full_path_len, sizeof(char));
+            strcat(full_tex_path, dir);
+            strcat(full_tex_path, "/"); 
+            strcat(full_tex_path, rel_tex_path.data);
+
+            //TODO: Detect alpha
+            normals_tex = tex_new(full_tex_path, false);
+        }
+        
          
 
-        Model m = model_new(geom, diffuse_tex); //When we handle materials, this will be modified.
+        Model m = model_new(geom, diffuse_tex, normals_tex); //When we handle materials, this will be modified.
         dynarr_push(&m.model_instances, IDENTITY);
 
         dynarr_push(&models, &m);

@@ -24,12 +24,14 @@ typedef struct {
 
     //eventually will probably be multiple textures (optional), but for now, we will do one
     //optional texture. If null, no texture.
-    Texture* tex;
+    Texture* diffuse;
+
+    Texture* normals;
 
 } Model;
 
 //tex can be null
-Model model_new(FullGeometry geom, Texture* tex);
+Model model_new(FullGeometry geom, Texture* diffuse, Texture* normals);
 
 //Model model_from_stl_file(const char* path);
 

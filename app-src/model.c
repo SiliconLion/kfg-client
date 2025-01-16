@@ -1,10 +1,11 @@
 
 #include "model.h"
 
-Model model_new(FullGeometry geom, Texture* tex) {
+Model model_new(FullGeometry geom, Texture* diffuse, Texture* normals) {
     dynarr model_instances = dynarr_new(sizeof(mat4), 1);
     return (Model){
-        .geom = geom, .model_instances = model_instances, .tex = tex
+        .geom = geom, .model_instances = model_instances, 
+        .diffuse = diffuse, .normals = normals
     };
 }
 
@@ -18,8 +19,8 @@ void model_draw_instance(Model* m, u32 selected,  u32 model_matrix_loc) {
             **instance
     );
 
-    if(m->tex) {
-        tex_bind(m->tex, 0);
+    if(m->normals) {
+        tex_bind(m->normals, 0);
     }
 
     full_geom_draw(&m->geom);

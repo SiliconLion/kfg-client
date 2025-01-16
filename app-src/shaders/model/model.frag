@@ -29,7 +29,7 @@ void main() {
 
 
 
-//    FragColor = texture(Tex, TexCoord);
+   FragColor = texture(Tex, TexCoord);
 //    FragColor = vec4(1.0);
 //    FragColor = vec4(norm, 1.0);
     // FragColor = vec4(TexCoord, 1.0, 1.0);
