@@ -148,7 +148,8 @@ dynarr DoTheImportThing( const char* pFile) {
 
         struct aiString rel_tex_path;
         enum aiReturn ret = aiGetMaterialTexture(
-            material, aiTextureType_DIFFUSE, 0,  
+            material, aiTextureType_DIFFUSE, 0, 
+            // material, aiTextureType_BASE_COLOR, 0,   
             &rel_tex_path, 
             NULL, NULL, NULL, NULL, NULL, NULL
             );
@@ -171,7 +172,8 @@ dynarr DoTheImportThing( const char* pFile) {
         Texture* normals_tex;
 
         ret = aiGetMaterialTexture(
-            material, aiTextureType_NORMALS, 0,  
+            material, aiTextureType_NORMALS, 0,
+            // material, aiTextureType_BASE_COLOR, 0,  
             &rel_tex_path, 
             NULL, NULL, NULL, NULL, NULL, NULL
             );

@@ -14,3 +14,5 @@ definitions and will expand over time. But may eventually include some configura
 10/29/24 - David S- remember to run cmake whenever updating shaders cuz they're in the assets folder, and the 
 updated version wont get copied unless you do. 
 TODO: make it so CMake always checks for changes in the assets folder
+
+01/16/24 - David S- There is a choice to be made about using what ASSIMP reports as a `diffuse_texture` and a `base_color` texture. Theoretically the difference is diffuse textures had ambient occlusion baked into them and are pre pbr, whereas base_color is just albedo. However it is not clear to me that this is the case from this sponza model. Since i do not currently calculate ambient occlusion, I am going with `diffuse_texture`. I will continue building based on this sponza model, but this will be something to revist with other standard test models and with models we export from blender. 

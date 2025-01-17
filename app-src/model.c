@@ -19,8 +19,11 @@ void model_draw_instance(Model* m, u32 selected,  u32 model_matrix_loc) {
             **instance
     );
 
+    if(m->diffuse) {
+        tex_bind(m->diffuse, 0);
+    } 
     if(m->normals) {
-        tex_bind(m->normals, 0);
+        tex_bind(m->normals, 1);
     }
 
     full_geom_draw(&m->geom);

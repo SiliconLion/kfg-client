@@ -36,7 +36,7 @@ u32 counter_global;
 Camera camera;
 f32 zoom_fac = 1.0;
 f32 rotation_fac = M_PI / 100.0;
-f32 movement_speed = 1;
+f32 movement_speed = 10;
 
 //on a GLFW error, will print the error
 void error_callback(int error, const char* description) {
@@ -275,6 +275,16 @@ int main() {
     u32 model_matrix_loc = glGetUniformLocation(model_shader->program, "model");
     u32 model_view_loc = glGetUniformLocation(model_shader->program, "view");
     u32 model_perspective_loc = glGetUniformLocation(model_shader->program, "perspective");
+
+    u32 model_diffuse_loc = glGetUniformLocation(model_shader->program, "DIFFUSE");
+    u32 model_normals_loc = glGetUniformLocation(model_shader->program, "NORMALS");
+
+    shad_bind(model_shader);
+    glUniform1i(model_diffuse_loc, 0);
+    glUniform1i(model_normals_loc, 1);
+    shad_unbind();
+
+    
     GLERROR();
 
 
@@ -289,7 +299,7 @@ int main() {
     glm_vec3_copy((vec3){-13.920774, 104.313194, -0.615634}, camera.target);
     camera.y_fov = 0.954656;
     camera.near_plane = 0.100000; 
-    camera.far_plane = 1500.000000;
+    camera.far_plane = 3000.000000;
     camera.aspect = window_ratio_global;
 
     camera_update(&camera);
