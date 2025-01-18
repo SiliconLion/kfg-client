@@ -13,82 +13,11 @@
 #endif
 
 
-
-dynarr DoTheImportThing( const char* pFile) {
-    const mat4 IDENTITY;
-    glm_mat4_identity(IDENTITY);
-
-
-    // Start the import on the given file with some example postprocessing
-    // Usually - if speed is not the most important aspect for you - you'll t
-    // probably to request more postprocessing than we do in this example.
-    const struct aiScene* scene = aiImportFile( pFile,
-                                                aiProcess_CalcTangentSpace       |
-                                                aiProcess_Triangulate            |
-                                                aiProcess_JoinIdenticalVertices  |
-                                                aiProcess_SortByPType);
-
-    // If the import failed, report it
-    if( NULL == scene) {
-        //ToDo: Better Error logging. Need like an "error.h"
-        const char* err_msg = aiGetErrorString();
-
-        //TODO: fix validation. strlen_s doesn't want to load rn and I have other compilation problems I have to fix first.
-//        if(strlen_s(err_msg, 10000) >= 10000) {
-//            printf("assimp errored but error message is mallformed.");
-//            exit(-1);
-//        }
-    //        we've validated that the string is okay to print, dispite not being a str litterals
-        printf("Assimp errored: %s\n", err_msg);
-        return DYNARR_ZERO;
-    }
-
-    printf("Scene has %u meshes.\n", scene->mNumMeshes);
-    printf("Scene has %u materials.\n", scene->mNumMaterials);
-    printf("Scene has %u textures.\n", scene->mNumTextures);
-    printf("Scene has %u cameras.\n", scene->mNumCameras);
-    printf("Scene has %u lights.\n", scene->mNumLights);
-    printf("Scene has %u skeletons.\n", scene->mNumSkeletons);
-    printf("Scene has %u animations.\n", scene->mNumAnimations);
-
-    // Now we can access the file's contents
-    struct aiNode* root_node = scene->mRootNode;
-    struct aiNode* curr_node;
-
-    printf("num of root node children: %u\n", root_node->mNumChildren);
-    if(root_node->mNumChildren == 0 ) {
-        curr_node = root_node;
-    } else {
-        curr_node = root_node->mChildren[0];
-    }
-
-    
-
-    if(curr_node->mNumChildren >= 1) {
-        //recurse 
-        printf("cannot handle multiple children yet");
-        return DYNARR_ZERO;
-
-        //When not in the root node, we need to keep track of the relative transformations of each node
-    }
-
-
-    printf("curr_node num children: %u\n", curr_node->mNumChildren);
-    printf("curr_node num meshes: %u\n", curr_node->mNumMeshes);
-
-    C_STRUCT aiMatrix4x4 curr_transformation = curr_node->mTransformation;
-
-    dynarr models = dynarr_new(sizeof(Model), curr_node->mNumMeshes);
-    for(u32 i = 0; i < curr_node->mNumMeshes; i++) {
-        u32 mesh_idx = curr_node->mMeshes[i];
-        struct aiMesh* mesh = scene->mMeshes[i];
-
-        if(mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
+bool ai_mesh_to_geom(FullGeometry* geom, struct aiMesh* mesh) {
+       if(mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
             printf("mesh contains non-triangle vertices");
-            return DYNARR_ZERO;
+            return false;
         }
-
-
 
         struct aiVector3D* positions =  mesh->mVertices;
         struct aiVector3D* normals =  mesh->mNormals; 
@@ -122,43 +51,37 @@ dynarr DoTheImportThing( const char* pFile) {
 
         VERTEX_BLUEPRINT* bp = ThreeNormTexPointBlueprint;
 
-        // upload geometry
-        FullGeometry geom = full_geom_new(
+        *geom = full_geom_new(
             bp,
             sizeof(ThreeNormTexPoint),
             vertices, indices,
             GL_TRIANGLES, GL_STATIC_DRAW
         );
 
-        // Todo: handle materials and textures
+        return true;
+}
 
-        struct aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-
-        // aiGetMaterialProperty(material, AI_MATKEY_NAME, )
-        printf("Material with index %u has the following textures:\n", mesh->mMaterialIndex);
-
-        //looping through every variant in aiTextureType
-        for(u32 i = 0; i < AI_TEXTURE_TYPE_MAX; i++) {
-            u32 tex_count = aiGetMaterialTextureCount(material, i);
-            const char* tex_name = aiTextureTypeToString(i);
-            printf("    %u %s textures.\n", tex_count, tex_name);
-        }
-
-        Texture* diffuse_tex;
+//TODO: the double pointer for tex is annoying, but the current texture module is written around a Texture
+//being a pointer. So thats what it is for now
+bool load_texture_from_mat(const char* pFile, Texture** tex, struct aiMaterial* mat, enum aiTextureType type, u32 mat_idx) {
+    Texture* diffuse_tex;
 
         struct aiString rel_tex_path;
         enum aiReturn ret = aiGetMaterialTexture(
-            material, aiTextureType_DIFFUSE, 0, 
+            mat, type, 0, 
             // material, aiTextureType_BASE_COLOR, 0,   
             &rel_tex_path, 
             NULL, NULL, NULL, NULL, NULL, NULL
             );
         if(ret != aiReturn_SUCCESS) {
-            printf("failed to get diffuse texture from scene for mesh %u\n", mesh_idx);
-            diffuse_tex = NULL;
+            const char * type_as_str = aiTextureTypeToString(type);
+            printf("failed to get %s from scene for mesh %u\n", type_as_str, mat_idx);
+            return false;
         } else {
+
             char * dir = get_dir_from_file_path(pFile);
 
+            //ToDo: refactor this out into a utility function?
             u32 full_path_len = strlen(dir) + strlen(rel_tex_path.data) + 1 + 1; //+1 for '/' and +1 for '\0'
             char * full_tex_path = calloc(full_path_len, sizeof(char));
             strcat(full_tex_path, dir);
@@ -166,34 +89,143 @@ dynarr DoTheImportThing( const char* pFile) {
             strcat(full_tex_path, rel_tex_path.data);
 
             //TODO: Detect alpha
-            diffuse_tex = tex_new(full_tex_path, false);
+            *tex = tex_new(full_tex_path, false);
         }
 
-        Texture* normals_tex;
+        return true;
+}
 
-        ret = aiGetMaterialTexture(
-            material, aiTextureType_NORMALS, 0,
-            // material, aiTextureType_BASE_COLOR, 0,  
-            &rel_tex_path, 
-            NULL, NULL, NULL, NULL, NULL, NULL
-            );
-        if(ret != aiReturn_SUCCESS) {
-            printf("failed to get normals texture from scene for mesh %u\n", mesh_idx);
-            normals_tex = NULL;
-        } else {
-            char * dir = get_dir_from_file_path(pFile);
 
-            u32 full_path_len = strlen(dir) + strlen(rel_tex_path.data) + 1 + 1; //+1 for '/' and +1 for '\0'
-            char * full_tex_path = calloc(full_path_len, sizeof(char));
-            strcat(full_tex_path, dir);
-            strcat(full_tex_path, "/"); 
-            strcat(full_tex_path, rel_tex_path.data);
+bool import_scene(Scene* scene_out, const char* pFile) {
+    const mat4 IDENTITY;
+    glm_mat4_identity(IDENTITY);
 
-            //TODO: Detect alpha
-            normals_tex = tex_new(full_tex_path, false);
-        }
+
+    // Start the import on the given file with some example postprocessing
+    // Usually - if speed is not the most important aspect for you - you'll t
+    // probably to request more postprocessing than we do in this example.
+    const struct aiScene* scene = aiImportFile( pFile,
+                                                aiProcess_CalcTangentSpace       |
+                                                aiProcess_Triangulate            |
+                                                aiProcess_JoinIdenticalVertices  |
+                                                aiProcess_SortByPType);
+
+    // If the import failed, report it
+    if( NULL == scene) {
+        //ToDo: Better Error logging. Need like an "error.h"
+        const char* err_msg = aiGetErrorString();
+
+        //TODO: fix validation. strlen_s doesn't want to load rn and I have other compilation problems I have to fix first.
+//        if(strlen_s(err_msg, 10000) >= 10000) {
+//            printf("assimp errored but error message is mallformed.");
+//            exit(-1);
+//        }
+    //        we've validated that the string is okay to print, dispite not being a str litterals
+        printf("Assimp errored: %s\n", err_msg);
+        return false;
+    }
+
+    printf("Scene has %u meshes.\n", scene->mNumMeshes);
+    printf("Scene has %u materials.\n", scene->mNumMaterials);
+    printf("Scene has %u textures.\n", scene->mNumTextures);
+    printf("Scene has %u cameras.\n", scene->mNumCameras);
+    printf("Scene has %u lights.\n", scene->mNumLights);
+    printf("Scene has %u skeletons.\n", scene->mNumSkeletons);
+    printf("Scene has %u animations.\n", scene->mNumAnimations);
+
+    // Now we can access the file's contents
+    struct aiNode* root_node = scene->mRootNode;
+    struct aiNode* curr_node;
+
+    printf("num of root node children: %u\n", root_node->mNumChildren);
+    if(root_node->mNumChildren == 0 ) {
+        curr_node = root_node;
+    } else {
+        curr_node = root_node->mChildren[0];
+    }
+
+    
+
+    // if(curr_node->mNumChildren >= 1) {
+    //     //recurse 
+    //     printf("cannot handle multiple children yet");
+    //     return DYNARR_ZERO;
+
+    //     //When not in the root node, we need to keep track of the relative transformations of each node
+    // }
+
+
+    // printf("curr_node num children: %u\n", curr_node->mNumChildren);
+    // printf("curr_node num meshes: %u\n", curr_node->mNumMeshes);
+
+    // C_STRUCT aiMatrix4x4 curr_transformation = curr_node->mTransformation;
+
+    // dynarr models = dynarr_new(sizeof(Model), curr_node->mNumMeshes);
+
+
+//load every mesh into a FullGeometry 
+    dynarr geometries = dynarr_new(sizeof(FullGeometry), scene->mNumMeshes);
+    for(u32 i = 0; i < scene->mNumMeshes; i++) {
         
-         
+        struct aiMesh* mesh = scene->mMeshes[i];
+        FullGeometry g;
+        if(!ai_mesh_to_geom(&g, mesh)) {
+            return false;
+        }
+        dynarr_push(&geometries, &g);
+    }
+
+//load the materials by loading each relavent texture
+
+    //TODO: refactor the texture module to not be based around a Texture pointer but just a 
+    //texture struct
+    dynarr diffuse_textures = dynarr_new(sizeof(Texture*), scene->mNumMaterials);
+    dynarr normals_textures = dynarr_new(sizeof(Texture*), scene->mNumMaterials);
+
+    for(u32 i = 0; i < scene->mNumMaterials; i++) {
+        struct aiMaterial* material = scene->mMaterials[i];
+
+        if(i == 25) {
+            printf("here\n");
+        }
+
+        { //just debug printing stuff. good info. 
+            printf("Material with index %u has the following textures:\n", i);
+
+            // //looping through every variant in aiTextureType
+            for(u32 j = 0; j < AI_TEXTURE_TYPE_MAX; j++) {
+                u32 tex_count = aiGetMaterialTextureCount(material, j);
+                const char* tex_name = aiTextureTypeToString(j);
+                printf("    %u %s textures.\n", tex_count, tex_name);
+            }
+        }
+
+        Texture* diffuse;
+        Texture* normals; 
+
+        if(!load_texture_from_mat(pFile, &diffuse, material, aiTextureType_DIFFUSE, i)) {
+            diffuse = NULL;
+        }
+        dynarr_push(&diffuse_textures, &diffuse);
+
+        if(!load_texture_from_mat(pFile, &normals, material, aiTextureType_NORMALS, i)) {
+            normals = NULL;
+        }
+        dynarr_push(&normals_textures, &normals);
+    }
+
+//join the geometries and textures into a model
+
+    dynarr models = dynarr_new(sizeof(Model), scene->mNumMeshes);
+        
+    for(u32 i = 0; i < scene->mNumMeshes; i++) {
+        struct aiMesh* mesh = scene->mMeshes[i];
+        u32 mat_idx = mesh->mMaterialIndex;
+
+        FullGeometry* geom = dynarr_at(&geometries, i);
+
+        Texture** diffuse_tex = dynarr_at(&diffuse_textures, mat_idx);
+        Texture** normals_tex = dynarr_at(&normals_textures, mat_idx);
 
         Model m = model_new(geom, diffuse_tex, normals_tex); //When we handle materials, this will be modified.
         dynarr_push(&m.model_instances, IDENTITY);
@@ -201,9 +233,18 @@ dynarr DoTheImportThing( const char* pFile) {
         dynarr_push(&models, &m);
     }
 
+    //ToDo: Trace the scene herarchy/nodes . However for the sponza model, which has
+    //only one node, it doesn't matter.
 
-    // We're done. Release all resources associated with this import
+    *scene_out = (Scene){
+        .geometries = geometries,
+        .diffuse_textures = diffuse_textures,
+        .normals_textures = normals_textures,
+        .models = models
+    };
+
+    //Release all resources associated with this import
     aiReleaseImport( scene);
 
-    return models;
+    return true;
 }

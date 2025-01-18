@@ -1,7 +1,7 @@
 
 #include "model.h"
 
-Model model_new(FullGeometry geom, Texture* diffuse, Texture* normals) {
+Model model_new(FullGeometry* geom, Texture** diffuse, Texture** normals) {
     dynarr model_instances = dynarr_new(sizeof(mat4), 1);
     return (Model){
         .geom = geom, .model_instances = model_instances, 
@@ -19,14 +19,14 @@ void model_draw_instance(Model* m, u32 selected,  u32 model_matrix_loc) {
             **instance
     );
 
-    if(m->diffuse) {
-        tex_bind(m->diffuse, 0);
+    if(*m->diffuse) {
+        tex_bind(*m->diffuse, 0);
     } 
-    if(m->normals) {
-        tex_bind(m->normals, 1);
+    if(*m->normals) {
+        tex_bind(*m->normals, 1);
     }
 
-    full_geom_draw(&m->geom);
+    full_geom_draw(m->geom);
 
     free(instance);
 }

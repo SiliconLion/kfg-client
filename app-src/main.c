@@ -249,8 +249,8 @@ int main() {
 
 
 
-    dynarr models = DoTheImportThing("assets/scenes/Sponza/glTF/Sponza.gltf");
-    if(dynarr_is_zero(&models)) {
+    Scene scene;
+    if(!import_scene(&scene, "assets/scenes/Sponza/glTF/Sponza.gltf")){
         printf("I weep, for dispite promises made, we could not import a gltf file\n");
     } else {
         printf("HUZZAH! Assimp imported a complex gltf file\n");
@@ -370,8 +370,8 @@ int main() {
 
 
             // //draw all models
-            for(usize i = 0; i < models.len; i++) {
-                Model* m = (Model*)dynarr_at(&models, i);
+            for(usize i = 0; i < scene.models.len; i++) {
+                Model* m = (Model*)dynarr_at(&scene.models, i);
 
                 model_draw_instance(m, 0, model_matrix_loc);     
                 // GLERROR();          
