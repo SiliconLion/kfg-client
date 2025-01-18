@@ -13,7 +13,8 @@ typedef struct {
     dynarr geometries;
     dynarr diffuse_textures;
     dynarr normals_textures;
-    dynarr models;
+    dynarr model_prototypes;
+    dynarr model_instances;
 } Scene;
 
 bool import_scene(Scene* scene_out, const char* pFile);

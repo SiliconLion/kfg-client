@@ -214,9 +214,8 @@ bool import_scene(Scene* scene_out, const char* pFile) {
         dynarr_push(&normals_textures, &normals);
     }
 
-//join the geometries and textures into a model
-
-    dynarr models = dynarr_new(sizeof(Model), scene->mNumMeshes);
+//join the geometries and textures into model prototypes
+    dynarr model_prototypes = dynarr_new(sizeof(ModelPrototype), scene->mNumMeshes);
         
     for(u32 i = 0; i < scene->mNumMeshes; i++) {
         struct aiMesh* mesh = scene->mMeshes[i];
@@ -227,20 +226,28 @@ bool import_scene(Scene* scene_out, const char* pFile) {
         Texture** diffuse_tex = dynarr_at(&diffuse_textures, mat_idx);
         Texture** normals_tex = dynarr_at(&normals_textures, mat_idx);
 
-        Model m = model_new(geom, diffuse_tex, normals_tex); //When we handle materials, this will be modified.
-        dynarr_push(&m.model_instances, IDENTITY);
-
-        dynarr_push(&models, &m);
+        ModelPrototype m = model_prototype_new(geom, diffuse_tex, normals_tex); //When we handle materials, this will be modified.
+        dynarr_push(&model_prototypes, &m);
     }
 
+//create all the model instances
+
+    dynarr model_instances = dynarr_new(sizeof(ModelInstance), scene->mNumMeshes);
     //ToDo: Trace the scene herarchy/nodes . However for the sponza model, which has
-    //only one node, it doesn't matter.
+    //only one node, it doesn't matter. So for now just give them all the identity transformation
+    for(u32 i = 0; i < scene->mNumMeshes; i++) {
+        ModelInstance m = model_instance_new(dynarr_at(&model_prototypes, i), IDENTITY); 
+        dynarr_push(&model_instances, &m);
+    }
+
+    
 
     *scene_out = (Scene){
         .geometries = geometries,
         .diffuse_textures = diffuse_textures,
         .normals_textures = normals_textures,
-        .models = models
+        .model_prototypes = model_prototypes,
+        .model_instances  = model_instances
     };
 
     //Release all resources associated with this import

@@ -17,44 +17,52 @@ typedef struct {
     //but I'm going to be assuming they are normalized.
     FullGeometry* geom; //later this may become a vec of geometries
 
-    //Vec<Mat4>
-    //These matrices represents all the transformations that place each instance into
-    //world coordinates.
-    dynarr model_instances;
-
     //eventually will probably be multiple textures (optional), but for now, we will do one
     //optional texture. If null, no texture.
     Texture** diffuse;
 
     Texture** normals;
 
-} Model;
+} ModelPrototype;
 
 //tex can be null
-Model model_new(FullGeometry* geom, Texture** diffuse, Texture** normals);
+ModelPrototype model_prototype_new(FullGeometry* geom, Texture** diffuse, Texture** normals);
 
 //Model model_from_stl_file(const char* path);
 
+//
+////model_matrix_loc is the location of the uniform in the currently
+////bound shader that transforms local coordinates to world coordinates
+////draws the instance at `selected` index
+//void model_draw_instance(ModelPrototype* m, u32 selected, u32 model_matrix_loc);
+//
+////model_matrix_loc is the location of the uniform in the currently
+////bound shader that transforms local coordinates to world coordinates
+////draws every instance
+//void model_draw_all_instances(ModelPrototype* m, u32 model_matrix_loc);
+//
+//
+//
+////model_matrix_loc is the location of the uniform in the currently
+////bound shader that transforms local coordinates to world coordinates
+////calls `model_draw_instance` for each index in `selected`
+////ideally selected should have no duplicates, but probably not gonna explode if it does
+//void model_draw_instance_list(ModelPrototype* m, u32* selected, usize selected_len, u32 model_matrix_loc);
+//
+//
+////actually wait on this because we might want to be smarter about
+////how textures are deleted
+////void model_delete(Model* m);
 
-//model_matrix_loc is the location of the uniform in the currently
-//bound shader that transforms local coordinates to world coordinates
-//draws the instance at `selected` index
-void model_draw_instance(Model* m, u32 selected,  u32 model_matrix_loc);
-
-//model_matrix_loc is the location of the uniform in the currently
-//bound shader that transforms local coordinates to world coordinates
-//draws every instance
-void model_draw_all_instances(Model* m, u32 model_matrix_loc);
 
 
+typedef struct {
+    ModelPrototype* prototype;
+    mat4 world_transform;
+} ModelInstance;
 
-//model_matrix_loc is the location of the uniform in the currently
-//bound shader that transforms local coordinates to world coordinates
-//calls `model_draw_instance` for each index in `selected`
-//ideally selected should have no duplicates, but probably not gonna explode if it does
-void model_draw_instance_list(Model* m, u32* selected, usize selected_len, u32 model_matrix_loc);
+ModelInstance model_instance_new(ModelPrototype* p, mat4 world_transform);
 
-
-//actually wait on this because we might want to be smarter about
-//how textures are deleted
-//void model_delete(Model* m);
+void draw_model_instance(ModelInstance* inst, u32 world_matrix_loc);
+//instances is Vec<ModelInstance>
+void draw_all_model_instances(dynarr* instances, u32 world_matrix_loc);

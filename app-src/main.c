@@ -36,7 +36,7 @@ u32 counter_global;
 Camera camera;
 f32 zoom_fac = 1.0;
 f32 rotation_fac = M_PI / 100.0;
-f32 movement_speed = 10;
+f32 movement_speed = 30;
 
 //on a GLFW error, will print the error
 void error_callback(int error, const char* description) {
@@ -369,13 +369,14 @@ int main() {
 
 
 
-            // //draw all models
-            for(usize i = 0; i < scene.models.len; i++) {
-                Model* m = (Model*)dynarr_at(&scene.models, i);
+    // //draw all models
+            // for(usize i = 0; i < scene.model_instances.len; i++) {
+            //     // ModelPrototype* m = (ModelPrototype*)dynarr_at(&scene.models, i);
 
-                model_draw_instance(m, 0, model_matrix_loc);     
-                // GLERROR();          
-            }
+            //     model_draw_instance(m, 0, model_matrix_loc);     
+            //     // GLERROR();          
+            // }
+            draw_all_model_instances(&scene.model_instances, model_matrix_loc);
 
         }
 
