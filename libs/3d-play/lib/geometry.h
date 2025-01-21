@@ -43,6 +43,8 @@ FullGeometry full_geom_new(
         GLenum primitive_type, GLenum usage
 );
 
+FullGeometry full_geom_empty();
+
 void full_geom_bind(FullGeometry * g) ;
 
 void full_geom_unbind();

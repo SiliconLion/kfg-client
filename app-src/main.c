@@ -36,7 +36,7 @@ u32 counter_global;
 Camera camera;
 f32 zoom_fac = 1.0;
 f32 rotation_fac = M_PI / 100.0;
-f32 movement_speed = 30;
+f32 movement_speed = 1;
 
 //on a GLFW error, will print the error
 void error_callback(int error, const char* description) {
@@ -207,7 +207,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 
-int main() {
+int main(int argc, const char* argv[]) {
+
     f32 BOARD_WIDTH = 8.0;
     f32 BOARD_HEIGHT = 2.0;
     mat4 IDENTITY;
@@ -247,10 +248,17 @@ int main() {
 
 
 
+    const char* scene_path;
+    if(argc < 2) {
+        scene_path = "assets/scenes/Sponza/glTF/Sponza.gltf";
+    } else {
+        scene_path = argv[1];
+    }
+
 
 
     Scene scene;
-    if(!import_scene(&scene, "assets/scenes/Sponza/glTF/Sponza.gltf")){
+    if(!import_scene(&scene, scene_path, true)){
         printf("I weep, for dispite promises made, we could not import a gltf file\n");
     } else {
         printf("HUZZAH! Assimp imported a complex gltf file\n");
@@ -341,43 +349,8 @@ int main() {
             );
             // GLERROR();
 
-            
-//             //draw walls
-//             {
-//                 model_draw_all_instances(&wall, model_matrix_loc);
-
-//             }
-
-//             //draw board
-//             {
-//                 model_draw_all_instances(&board, model_matrix_loc);
-//             }
-
-//             //draw stones
-//             {
-// //                model_draw_all_instances(&white_stones, model_matrix_loc);
-// //                model_draw_all_instances(&black_stones_model, model_matrix_loc);
-//                 model_draw_instance_list(
-//                     &black_stones_model, black_stones.data, black_stones.len, model_matrix_loc
-//                 );
-
-//                 model_draw_instance_list(
-//                     &white_stones_model, white_stones.data, white_stones.len, model_matrix_loc
-//                 );
-//             }
-
-
-
-
     // //draw all models
-            // for(usize i = 0; i < scene.model_instances.len; i++) {
-            //     // ModelPrototype* m = (ModelPrototype*)dynarr_at(&scene.models, i);
-
-            //     model_draw_instance(m, 0, model_matrix_loc);     
-            //     // GLERROR();          
-            // }
             draw_all_model_instances(&scene.model_instances, model_matrix_loc);
-
         }
 
         //present the render to the window and poll events

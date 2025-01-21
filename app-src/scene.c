@@ -13,10 +13,32 @@
 #endif
 
 
+
 bool ai_mesh_to_geom(FullGeometry* geom, struct aiMesh* mesh) {
-       if(mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
-            printf("mesh contains non-triangle vertices");
-            return false;
+        GLenum primitive_type;
+
+        switch(mesh->mPrimitiveTypes) {
+            case aiPrimitiveType_TRIANGLE :
+                primitive_type = GL_TRIANGLES;
+                break;
+            case aiPrimitiveType_LINE :
+                primitive_type = GL_LINE;
+                break;
+            case aiPrimitiveType_POINT :
+                primitive_type = GL_POINT;
+                break;
+            case (aiPrimitiveType_TRIANGLE | aiPrimitiveType_NGONEncodingFlag) :
+                // primitive_type = GL_TRIANGLE_FAN;
+                // break;
+                return false;
+            default :
+                printf(
+                    "unsupported mesh type. May be polygons."
+                    "May be that the mesh has multiple types of primitives."
+                    "In the case of the latter, pass `aiProcess_SortByPType` to the flags"
+                    "Of aiImportFile\n"
+                    );
+                return false;
         }
 
         struct aiVector3D* positions =  mesh->mVertices;
@@ -25,19 +47,32 @@ bool ai_mesh_to_geom(FullGeometry* geom, struct aiMesh* mesh) {
         //and that it has 2 components.
         struct aiVector3D* texCoords = mesh->mTextureCoords[0]; 
 
-        //interleave vertices 
+        float zero_vec[3] = {0.0, 0.0, 0.0};
+
+//interleave vertices 
         dynarr vertices = dynarr_new(sizeof(ThreeNormTexPoint), mesh->mNumVertices);
         for(u32 vx = 0; vx < mesh->mNumVertices; vx++) {
             ThreeNormTexPoint vertex = {0};
             memcpy(&vertex.pos,  positions + vx, sizeof(f32) * 3);
-            memcpy(&vertex.norm, normals   + vx, sizeof(f32) * 3);
-            memcpy(&vertex.tex,  texCoords + vx, sizeof(f32) * 2); //only copying the first two components to vertex.tex
+
+            if(normals) {
+                memcpy(&vertex.norm, normals   + vx, sizeof(f32) * 3);
+            } else {
+                memcpy(&vertex.norm, zero_vec, sizeof(f32) * 3);
+            }
+
             
+            if(texCoords) {
+                memcpy(&vertex.tex,  texCoords + vx, sizeof(f32) * 2); //only copying the first two components to vertex.tex
+            } else {
+                memcpy(&vertex.tex,  zero_vec, sizeof(f32) * 2);
+            }
+
             dynarr_push(&vertices, &vertex);
         }
 
 
-        //interleave indices
+//interleave indices
         dynarr indices = dynarr_new(sizeof(INDEX_TYPE), mesh->mNumFaces * 3);
 
         for(u32 fx = 0; fx < mesh->mNumFaces; fx++) {
@@ -49,13 +84,14 @@ bool ai_mesh_to_geom(FullGeometry* geom, struct aiMesh* mesh) {
             }
         }
 
+//initialize the geometry struct
         VERTEX_BLUEPRINT* bp = ThreeNormTexPointBlueprint;
 
         *geom = full_geom_new(
             bp,
             sizeof(ThreeNormTexPoint),
             vertices, indices,
-            GL_TRIANGLES, GL_STATIC_DRAW
+            primitive_type, GL_STATIC_DRAW
         );
 
         return true;
@@ -96,9 +132,11 @@ bool load_texture_from_mat(const char* pFile, Texture** tex, struct aiMaterial* 
 }
 
 
-bool import_scene(Scene* scene_out, const char* pFile) {
+bool import_scene(Scene* scene_out, const char* pFile, bool permissive) {
     const mat4 IDENTITY;
     glm_mat4_identity(IDENTITY);
+
+    // AI_CONFIG_PP_SBP_REMOVEaiPrimitiveType_LINE|aiPrimitiveType_POINT
 
 
     // Start the import on the given file with some example postprocessing
@@ -108,6 +146,7 @@ bool import_scene(Scene* scene_out, const char* pFile) {
                                                 aiProcess_CalcTangentSpace       |
                                                 aiProcess_Triangulate            |
                                                 aiProcess_JoinIdenticalVertices  |
+                                                // aiProcess_Remove |
                                                 aiProcess_SortByPType);
 
     // If the import failed, report it
@@ -170,7 +209,8 @@ bool import_scene(Scene* scene_out, const char* pFile) {
         struct aiMesh* mesh = scene->mMeshes[i];
         FullGeometry g;
         if(!ai_mesh_to_geom(&g, mesh)) {
-            return false;
+            if(!permissive) {return false; }
+            g = full_geom_empty();
         }
         dynarr_push(&geometries, &g);
     }

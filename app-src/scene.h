@@ -17,4 +17,4 @@ typedef struct {
     dynarr model_instances;
 } Scene;
 
-bool import_scene(Scene* scene_out, const char* pFile);
+bool import_scene(Scene* scene_out, const char* pFile, bool permissive);

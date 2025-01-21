@@ -52,6 +52,16 @@ FullGeometry full_geom_new(
     return g;
 }
 
+FullGeometry full_geom_empty() {
+    dynarr verts = dynarr_new(sizeof(ThreeNormPoint), 0);
+    dynarr indices = dynarr_new(sizeof(ThreeNormPoint), 0);
+
+    return full_geom_new(
+        ThreeNormPointBlueprint, sizeof(ThreeNormPoint),
+        verts, indices, GL_TRIANGLES, GL_STATIC_DRAW
+    );
+}
+
 void full_geom_bind(FullGeometry * g) {
     glBindVertexArray(g->VAO);
     glBindBuffer(GL_ARRAY_BUFFER, g->VBO);
