@@ -16,7 +16,7 @@
 #include "texture.h"
 #include "model.h"
 #include "camera.h"
-#include "board.h"
+// #include "board.h"
 #include "error-handling.h"
 #include "primatives.h"
 #include "helpers.h"
@@ -36,7 +36,7 @@ u32 counter_global;
 Camera camera;
 f32 zoom_fac = 1.0;
 f32 rotation_fac = M_PI / 100.0;
-f32 movement_speed = 1;
+f32 movement_speed = 30;
 
 //on a GLFW error, will print the error
 void error_callback(int error, const char* description) {
@@ -211,6 +211,7 @@ int main(int argc, const char* argv[]) {
 
     f32 BOARD_WIDTH = 8.0;
     f32 BOARD_HEIGHT = 2.0;
+
     mat4 IDENTITY;
     glm_mat4_identity(IDENTITY);
 
@@ -248,25 +249,7 @@ int main(int argc, const char* argv[]) {
 
 
 
-    const char* scene_path;
-    if(argc < 2) {
-        scene_path = "assets/scenes/Sponza/glTF/Sponza.gltf";
-    } else {
-        scene_path = argv[1];
-    }
-
-
-
-    Scene scene;
-    if(!import_scene(&scene, scene_path, true)){
-        printf("I weep, for dispite promises made, we could not import a gltf file\n");
-    } else {
-        printf("HUZZAH! Assimp imported a complex gltf file\n");
-    }
-
-
-
-
+    
 
 
 
@@ -297,6 +280,77 @@ int main(int argc, const char* argv[]) {
 
 
 
+    const char* scene_path;
+    if(argc < 2) {
+        scene_path = "assets/scenes/Sponza/glTF/Sponza.gltf";
+    } else {
+        scene_path = argv[1];
+    }
+
+    Scene setting;
+    if(!import_scene(&setting, scene_path, true)){
+        printf("I weep, for dispite promises made, we could not import a gltf file\n");
+    } else {
+        printf("HUZZAH! Assimp imported a complex gltf file\n");
+    }
+
+    GLERROR();
+
+
+    // Board board = board_new(19, 19);
+
+    Scene kfg_match = scene_new_empty();
+
+    FullGeometry g;
+    Texture* t; // REALLY gotta deal with this texture pointer nonsense. NEXT COMMIT I SWEAR
+
+
+    g = full_geom_from_stl(
+           "assets/models/go-board-basic.stl", GL_STATIC_DRAW);
+    dynarr_push(&kfg_match.geometries, &g);
+
+    g = full_geom_from_stl(
+            "assets/models/go-stone-basic1.stl", GL_STATIC_DRAW);
+    dynarr_push(&kfg_match.geometries, &g);
+
+    t = tex_new("assets/misc-textures/light-wood.jpg", false);
+    dynarr_push(&kfg_match.diffuse_textures, &t);
+
+    t = tex_new("assets/misc-textures/black-stone-texture.jpg", false);
+    dynarr_push(&kfg_match.diffuse_textures, &t);
+
+    t = tex_new("assets/misc-textures/white-stone-texture.jpg", false);
+    dynarr_push(&kfg_match.diffuse_textures, &t);
+
+    ModelPrototype board_proto = {
+        .geom = dynarr_at(&kfg_match.geometries, 0),
+        .diffuse = dynarr_at(&kfg_match.diffuse_textures, 0),
+        .normals = NULL
+    };
+    dynarr_push(&kfg_match.model_prototypes, &board_proto);
+    
+    ModelPrototype black_stone_proto = {
+        .geom = dynarr_at(&kfg_match.geometries, 1),
+        .diffuse = dynarr_at(&kfg_match.diffuse_textures, 1),
+        .normals = NULL
+    };
+    dynarr_push(&kfg_match.model_prototypes, &black_stone_proto);
+
+    ModelPrototype white_stone_proto = {
+        .geom = dynarr_at(&kfg_match.geometries, 1),
+        .diffuse = dynarr_at(&kfg_match.diffuse_textures, 2),
+        .normals = NULL
+    };
+    dynarr_push(&kfg_match.model_prototypes, &white_stone_proto);
+
+
+    ModelInstance board_inst;
+    board_inst.prototype = dynarr_at(&kfg_match.model_prototypes, 0),
+    glm_mat4_identity(&board_inst.world_transform);
+
+    dynarr_push(&kfg_match.model_instances, &board_inst);
+
+
 
 
     glDisable(GL_CULL_FACE);
@@ -305,6 +359,7 @@ int main(int argc, const char* argv[]) {
 
     glm_vec3_copy((vec3){-14.915992, 104.215508, -0.615611}, camera.pos);
     glm_vec3_copy((vec3){-13.920774, 104.313194, -0.615634}, camera.target);
+    // glm_vec3_zero(camera.target);
     camera.y_fov = 0.954656;
     camera.near_plane = 0.100000; 
     camera.far_plane = 3000.000000;
@@ -349,8 +404,11 @@ int main(int argc, const char* argv[]) {
             );
             // GLERROR();
 
-    // //draw all models
-            draw_all_model_instances(&scene.model_instances, model_matrix_loc);
+    // draw setting
+            // draw_all_model_instances(&setting.model_instances, model_matrix_loc);
+
+    // draw the match
+            draw_all_model_instances(&kfg_match.model_instances, model_matrix_loc);
         }
 
         //present the render to the window and poll events

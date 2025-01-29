@@ -6,6 +6,9 @@
 #include "texture.h"
 #include <cglm/cglm.h>
 
+
+//TODO: outdated comments
+
 //Can kinda do a poor-man's single inheritance by having a struct include Model as it's first
 //member. Because C's data repr. follows the order of declaration, you can just cast a pointer
 //to the child struct to a (Model*), and you'll get the model to act on. This is not
@@ -27,6 +30,8 @@ typedef struct {
 
 //tex can be null
 ModelPrototype model_prototype_new(FullGeometry* geom, Texture** diffuse, Texture** normals);
+
+void draw_model_from_mat(ModelPrototype* m, mat4 transform, u32 world_matrix_loc);
 
 //Model model_from_stl_file(const char* path);
 
@@ -66,3 +71,4 @@ ModelInstance model_instance_new(ModelPrototype* p, mat4 world_transform);
 void draw_model_instance(ModelInstance* inst, u32 world_matrix_loc);
 //instances is Vec<ModelInstance>
 void draw_all_model_instances(dynarr* instances, u32 world_matrix_loc);
+

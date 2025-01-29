@@ -6,7 +6,11 @@
 #include "shader.h"
 #include "geometry.h"
 #include "dynarr.h"
-#include "scene.h"
+// #include "scene.h"
+#include "model.h"
+
+#include <cglm/cglm.h>
+
 
 typedef struct {
     u32 color; //unsigned int for graphics convenience, but just black (0) or white (0xFFFFFF)
@@ -22,16 +26,24 @@ typedef struct {
 typedef struct {
     u32 row_count;
     u32 col_count;
-    dynarr stones;
-    Shader* board_shader;
-    Shader* stones_shader; //might be a little weird that the board owns this,
-    //but theres only one board and many stones, and this gets around either duplicating the shader
-    //for each stone (bad idea), or using a more complex, multi-ownership strategy.
+    dynarr stones; //Vec<Stone>
+    // Shader* board_shader;
+    // Shader* stones_shader; 
 
-    FullGeometry board_geometry;
-    FullGeometry stone_geometry; //there is only really one stone (geometry) loaded at once, we just draw
-    //it over and over in all the right places and with the right colors + effects
+    FullGeometry stone_geom;
+    FullGeometry board_geom;
+
+    Texture* board_difuse_tex;
+    Texture* black_stone_tex;
+    Texture* white_stone_tex;
+
+    ModelPrototype board_prototype;
+    ModelPrototype stone_prototype;
+
+    mat4 world_transform; //Where the board is in the world
 } Board;
+
+#define BOARD_HEIGHT 2.0
 
 
 //typedef struct {
@@ -45,6 +57,7 @@ typedef struct {
 Board board_new(u32 row_count, u32 col_count);
 //takes a new array of stones and deletes its old array of stones
 void board_update(Board* b, dynarr stones);
-//void board_draw(Board* b, Scene* s);
-void board_delete(Board* b);
+// void board_delete(Board* b);
+
+void board_draw(Board* b, u32 world_transform_loc);
 

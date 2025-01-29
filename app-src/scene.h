@@ -10,11 +10,15 @@
 
 
 typedef struct {
-    dynarr geometries;
-    dynarr diffuse_textures;
-    dynarr normals_textures;
-    dynarr model_prototypes;
-    dynarr model_instances;
+    dynarr geometries; //Vec<Geometry>
+    dynarr diffuse_textures; //Vec<Texture*>
+    dynarr normals_textures; //Vec<Texture*>
+    dynarr model_prototypes; //Vec<ModelPrototype>
+    dynarr model_instances; //Vec<ModelInstance>
 } Scene;
 
+Scene scene_new_empty();
+
 bool import_scene(Scene* scene_out, const char* pFile, bool permissive);
+
+// void add_to_scene()

@@ -13,6 +13,19 @@
 #endif
 
 
+Scene scene_new_empty() {
+    Scene s;
+    s.geometries = dynarr_new(sizeof(FullGeometry), 1);
+    s.diffuse_textures = dynarr_new(sizeof(Texture*),1);
+    s.normals_textures = dynarr_new(sizeof(Texture*),1);
+    s.model_prototypes = dynarr_new(sizeof(ModelPrototype),1);
+    s.model_instances = dynarr_new(sizeof(ModelInstance),1);
+    return s;
+}
+
+
+
+
 
 bool ai_mesh_to_geom(FullGeometry* geom, struct aiMesh* mesh) {
         GLenum primitive_type;

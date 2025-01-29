@@ -5,6 +5,8 @@
 //#include <uchar.h>
 #include <stdlib.h>
 
+#define GL_SILENCE_DEPRECATION
+
 //This header is meant to be included in more or less every file in the program.
 //inspired by Nullprogram's 2023 C style guide https://nullprogram.com/blog/2023/10/08/
 

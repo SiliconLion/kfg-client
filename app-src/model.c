@@ -9,6 +9,24 @@ ModelPrototype model_prototype_new(FullGeometry* geom, Texture** diffuse, Textur
     };
 }
 
+void draw_model_from_mat(ModelPrototype* m, mat4 transform, u32 world_matrix_loc) {
+    glUniformMatrix4fv(
+        world_matrix_loc,
+        1,
+        GL_FALSE,// column major order
+        transform
+    );
+
+    if(m->diffuse) {
+        tex_bind(*m->diffuse, 0);
+    } 
+    if(m->normals) {
+        tex_bind(*m->diffuse, 1);
+    }
+
+    full_geom_draw(m->geom);
+}
+
 // void model_draw_instance(ModelPrototype* m, u32 selected, u32 model_matrix_loc) {
 //     mat4* instance = dynarr_get(&m->model_instances, selected);
 
@@ -63,23 +81,7 @@ ModelInstance model_instance_new(ModelPrototype* p, mat4 world_transform) {
 
 
 void draw_model_instance(ModelInstance* inst, u32 world_matrix_loc) {
-
-    glUniformMatrix4fv(
-            world_matrix_loc,
-            1,
-            GL_FALSE,// column major order
-            inst->world_transform
-    );
-
-    if(*inst->prototype->diffuse) {
-        tex_bind(*inst->prototype->diffuse, 0);
-    } 
-    if(*inst->prototype->normals) {
-        tex_bind(*inst->prototype->diffuse, 1);
-    }
-
-    full_geom_draw(inst->prototype->geom);
-
+    draw_model_from_mat(inst->prototype, inst->world_transform, world_matrix_loc);
 }
 
 void draw_all_model_instances(dynarr* instances, u32 world_matrix_loc) {
