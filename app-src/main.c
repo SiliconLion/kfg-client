@@ -36,7 +36,7 @@ u32 counter_global;
 Camera camera;
 f32 zoom_fac = 1.0;
 f32 rotation_fac = M_PI / 100.0;
-f32 movement_speed = 30;
+f32 movement_speed = 3;
 
 //on a GLFW error, will print the error
 void error_callback(int error, const char* description) {
@@ -302,7 +302,7 @@ int main(int argc, const char* argv[]) {
     Scene kfg_match = scene_new_empty();
 
     FullGeometry g;
-    Texture* t; // REALLY gotta deal with this texture pointer nonsense. NEXT COMMIT I SWEAR
+    Texture t; // REALLY gotta deal with this texture pointer nonsense. NEXT COMMIT I SWEAR
 
 
     g = full_geom_from_stl(
@@ -359,11 +359,17 @@ int main(int argc, const char* argv[]) {
 
     glm_vec3_copy((vec3){-14.915992, 104.215508, -0.615611}, camera.pos);
     glm_vec3_copy((vec3){-13.920774, 104.313194, -0.615634}, camera.target);
-    // glm_vec3_zero(camera.target);
     camera.y_fov = 0.954656;
     camera.near_plane = 0.100000; 
     camera.far_plane = 3000.000000;
     camera.aspect = window_ratio_global;
+
+    // glm_vec3_zero(camera.target);
+    // glm_vec3_copy((vec3){5, 5, -5}, camera.pos);
+    // camera.y_fov = 0.954656;
+    // camera.near_plane = 0.100000; 
+    // camera.far_plane = 300.000000;
+    // camera.aspect = window_ratio_global;
 
     camera_update(&camera);
 
@@ -405,7 +411,7 @@ int main(int argc, const char* argv[]) {
             // GLERROR();
 
     // draw setting
-            // draw_all_model_instances(&setting.model_instances, model_matrix_loc);
+            draw_all_model_instances(&setting.model_instances, model_matrix_loc);
 
     // draw the match
             draw_all_model_instances(&kfg_match.model_instances, model_matrix_loc);

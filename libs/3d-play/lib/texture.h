@@ -29,7 +29,7 @@ void tex_unbind() ;
 
 //takes the path to the texture file and creates an OpenGL texture
 //alpha tells whether or not there the image format has alpha
-Texture * tex_new(const char * path, bool alpha);
+Texture tex_new(const char * path, bool alpha);
 
 void tex_delete(Texture * texture);
 

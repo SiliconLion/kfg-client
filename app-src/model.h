@@ -22,9 +22,9 @@ typedef struct {
 
     //eventually will probably be multiple textures (optional), but for now, we will do one
     //optional texture. If null, no texture.
-    Texture** diffuse;
+    Texture* diffuse;
 
-    Texture** normals;
+    Texture* normals;
 
 } ModelPrototype;
 

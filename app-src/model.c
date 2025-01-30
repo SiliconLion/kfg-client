@@ -18,10 +18,10 @@ void draw_model_from_mat(ModelPrototype* m, mat4 transform, u32 world_matrix_loc
     );
 
     if(m->diffuse) {
-        tex_bind(*m->diffuse, 0);
+        tex_bind(m->diffuse, 0);
     } 
     if(m->normals) {
-        tex_bind(*m->diffuse, 1);
+        tex_bind(m->diffuse, 1);
     }
 
     full_geom_draw(m->geom);

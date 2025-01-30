@@ -11,8 +11,8 @@
 
 typedef struct {
     dynarr geometries; //Vec<Geometry>
-    dynarr diffuse_textures; //Vec<Texture*>
-    dynarr normals_textures; //Vec<Texture*>
+    dynarr diffuse_textures; //Vec<Texture>
+    dynarr normals_textures; //Vec<Texture>
     dynarr model_prototypes; //Vec<ModelPrototype>
     dynarr model_instances; //Vec<ModelInstance>
 } Scene;

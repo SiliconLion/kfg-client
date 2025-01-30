@@ -110,38 +110,36 @@ bool ai_mesh_to_geom(FullGeometry* geom, struct aiMesh* mesh) {
         return true;
 }
 
-//TODO: the double pointer for tex is annoying, but the current texture module is written around a Texture
-//being a pointer. So thats what it is for now
-bool load_texture_from_mat(const char* pFile, Texture** tex, struct aiMaterial* mat, enum aiTextureType type, u32 mat_idx) {
-    Texture* diffuse_tex;
 
-        struct aiString rel_tex_path;
-        enum aiReturn ret = aiGetMaterialTexture(
-            mat, type, 0, 
-            // material, aiTextureType_BASE_COLOR, 0,   
-            &rel_tex_path, 
-            NULL, NULL, NULL, NULL, NULL, NULL
-            );
-        if(ret != aiReturn_SUCCESS) {
-            const char * type_as_str = aiTextureTypeToString(type);
-            printf("failed to get %s from scene for mesh %u\n", type_as_str, mat_idx);
-            return false;
-        } else {
+bool load_texture_from_mat(const char* pFile, Texture* tex, struct aiMaterial* mat, enum aiTextureType type, u32 mat_idx) {
 
-            char * dir = get_dir_from_file_path(pFile);
+    struct aiString rel_tex_path;
+    enum aiReturn ret = aiGetMaterialTexture(
+        mat, type, 0, 
+        // material, aiTextureType_BASE_COLOR, 0,   
+        &rel_tex_path, 
+        NULL, NULL, NULL, NULL, NULL, NULL
+        );
+    if(ret != aiReturn_SUCCESS) {
+        const char * type_as_str = aiTextureTypeToString(type);
+        printf("failed to get %s from scene for mesh %u\n", type_as_str, mat_idx);
+        return false;
+    } else {
 
-            //ToDo: refactor this out into a utility function?
-            u32 full_path_len = strlen(dir) + strlen(rel_tex_path.data) + 1 + 1; //+1 for '/' and +1 for '\0'
-            char * full_tex_path = calloc(full_path_len, sizeof(char));
-            strcat(full_tex_path, dir);
-            strcat(full_tex_path, "/"); 
-            strcat(full_tex_path, rel_tex_path.data);
+        char * dir = get_dir_from_file_path(pFile);
 
-            //TODO: Detect alpha
-            *tex = tex_new(full_tex_path, false);
-        }
+        //ToDo: refactor this out into a utility function?
+        u32 full_path_len = strlen(dir) + strlen(rel_tex_path.data) + 1 + 1; //+1 for '/' and +1 for '\0'
+        char * full_tex_path = calloc(full_path_len, sizeof(char));
+        strcat(full_tex_path, dir);
+        strcat(full_tex_path, "/"); 
+        strcat(full_tex_path, rel_tex_path.data);
 
-        return true;
+        //TODO: Detect alpha
+        *tex = tex_new(full_tex_path, false);
+    }
+
+    return true;
 }
 
 
@@ -230,10 +228,9 @@ bool import_scene(Scene* scene_out, const char* pFile, bool permissive) {
 
 //load the materials by loading each relavent texture
 
-    //TODO: refactor the texture module to not be based around a Texture pointer but just a 
-    //texture struct
-    dynarr diffuse_textures = dynarr_new(sizeof(Texture*), scene->mNumMaterials);
-    dynarr normals_textures = dynarr_new(sizeof(Texture*), scene->mNumMaterials);
+
+    dynarr diffuse_textures = dynarr_new(sizeof(Texture), scene->mNumMaterials);
+    dynarr normals_textures = dynarr_new(sizeof(Texture), scene->mNumMaterials);
 
     for(u32 i = 0; i < scene->mNumMaterials; i++) {
         struct aiMaterial* material = scene->mMaterials[i];
@@ -253,16 +250,16 @@ bool import_scene(Scene* scene_out, const char* pFile, bool permissive) {
             }
         }
 
-        Texture* diffuse;
-        Texture* normals; 
+        Texture diffuse;
+        Texture normals; 
 
         if(!load_texture_from_mat(pFile, &diffuse, material, aiTextureType_DIFFUSE, i)) {
-            diffuse = NULL;
+            diffuse = EMPTY_TEXTURE;
         }
         dynarr_push(&diffuse_textures, &diffuse);
 
         if(!load_texture_from_mat(pFile, &normals, material, aiTextureType_NORMALS, i)) {
-            normals = NULL;
+            normals = EMPTY_TEXTURE;
         }
         dynarr_push(&normals_textures, &normals);
     }
