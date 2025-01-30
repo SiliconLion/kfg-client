@@ -29,7 +29,7 @@ void tex_unbind() {
 
 //takes the path to the texture file and creates an OpenGL texture
 //alpha tells whether or not there the image format has alpha
-Texture tex_new(const char * path, bool alpha) {
+Texture tex_new(const char * path) {
     stbi_set_flip_vertically_on_load(true); 
 
     Texture texture;
@@ -56,9 +56,12 @@ Texture tex_new(const char * path, bool alpha) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    if (alpha) {
+    if (texture.nrChannels == 4) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width, texture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    } else if (texture.nrChannels == 3) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.width, texture.height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     } else {
+        printf("image has %u channels (which is not 3 or 4).\n", texture.nrChannels);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.width, texture.height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     }
  

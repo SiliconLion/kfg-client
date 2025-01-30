@@ -10,7 +10,7 @@ uniform sampler2D NORMALS;
 
 void main() {
     vec3 ambientLightColor = normalize(vec3(0.8, 0.8, 1));
-    float ambientStrength = 0.5;
+    float ambientStrength = 0.3;
     vec3 ambient = ambientStrength * ambientLightColor;
 
     vec3 objectColor = texture(DIFFUSE, TexCoord).rgb;
@@ -32,13 +32,9 @@ void main() {
 
 
 
+    // FragColor = vec4(texture(DIFFUSE, TexCoord).rgb, 1.0);
+    // FragColor = vec4(TexCoord, 0.0, 1.0);
+    // FragColor = vec4(norm, 1.0);
+    //FragColor = vec4(compound_norm, 1.0);
 
-
-//    FragColor = texture(Tex, TexCoord);
-//    FragColor = vec4(1.0);
-//    FragColor = vec4(norm, 1.0);
-    // FragColor = vec4(TexCoord, 1.0, 1.0);
-    // FragColor = vec4(1.0, .5, 1.0, 1.0);
-
-    // FragColor = texture(Tex, TexCoord);
 }

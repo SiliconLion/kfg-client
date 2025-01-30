@@ -36,7 +36,9 @@ u32 counter_global;
 Camera camera;
 f32 zoom_fac = 1.0;
 f32 rotation_fac = M_PI / 100.0;
-f32 movement_speed = 3;
+f32 movement_speed = 8;
+
+f32 board_scale = 20.0;
 
 //on a GLFW error, will print the error
 void error_callback(int error, const char* description) {
@@ -297,59 +299,83 @@ int main(int argc, const char* argv[]) {
     GLERROR();
 
 
+
     // Board board = board_new(19, 19);
 
-    Scene kfg_match = scene_new_empty();
+    // Scene kfg_match = scene_new_empty();
 
-    FullGeometry g;
-    Texture t; // REALLY gotta deal with this texture pointer nonsense. NEXT COMMIT I SWEAR
+    // FullGeometry g;
+    // Texture t; // REALLY gotta deal with this texture pointer nonsense. NEXT COMMIT I SWEAR
 
 
-    g = full_geom_from_stl(
-           "assets/models/go-board-basic.stl", GL_STATIC_DRAW);
-    dynarr_push(&kfg_match.geometries, &g);
+    // g = full_geom_from_stl(
+    //        "assets/models/go-board-basic.stl", GL_STATIC_DRAW);
+    // g = add_text_coords_to_geom(&g);
+    // dynarr_push(&kfg_match.geometries, &g);
 
-    g = full_geom_from_stl(
-            "assets/models/go-stone-basic1.stl", GL_STATIC_DRAW);
-    dynarr_push(&kfg_match.geometries, &g);
+    // g = full_geom_from_stl(
+    //         "assets/models/go-stone-basic1.stl", GL_STATIC_DRAW);
+    // g = add_text_coords_to_geom(&g);
+    // dynarr_push(&kfg_match.geometries, &g);
 
-    t = tex_new("assets/misc-textures/light-wood.jpg", false);
-    dynarr_push(&kfg_match.diffuse_textures, &t);
+    // t = tex_new("assets/misc-textures/light-wood.jpg", false);
+    // dynarr_push(&kfg_match.diffuse_textures, &t);
 
-    t = tex_new("assets/misc-textures/black-stone-texture.jpg", false);
-    dynarr_push(&kfg_match.diffuse_textures, &t);
+    // t = tex_new("assets/misc-textures/black-stone-texture.jpg", false);
+    // dynarr_push(&kfg_match.diffuse_textures, &t);
 
-    t = tex_new("assets/misc-textures/white-stone-texture.jpg", false);
-    dynarr_push(&kfg_match.diffuse_textures, &t);
+    // t = tex_new("assets/misc-textures/white-stone-texture.jpg", false);
+    // dynarr_push(&kfg_match.diffuse_textures, &t);
 
-    ModelPrototype board_proto = {
-        .geom = dynarr_at(&kfg_match.geometries, 0),
-        .diffuse = dynarr_at(&kfg_match.diffuse_textures, 0),
-        .normals = NULL
-    };
-    dynarr_push(&kfg_match.model_prototypes, &board_proto);
+    // ModelPrototype board_proto = {
+    //     .geom = dynarr_at(&kfg_match.geometries, 0),
+    //     .diffuse = dynarr_at(&kfg_match.diffuse_textures, 0),
+    //     .normals = NULL
+    // };
+    // dynarr_push(&kfg_match.model_prototypes, &board_proto);
     
-    ModelPrototype black_stone_proto = {
-        .geom = dynarr_at(&kfg_match.geometries, 1),
-        .diffuse = dynarr_at(&kfg_match.diffuse_textures, 1),
-        .normals = NULL
-    };
-    dynarr_push(&kfg_match.model_prototypes, &black_stone_proto);
+    // ModelPrototype black_stone_proto = {
+    //     .geom = dynarr_at(&kfg_match.geometries, 1),
+    //     .diffuse = dynarr_at(&kfg_match.diffuse_textures, 1),
+    //     .normals = NULL
+    // };
+    // dynarr_push(&kfg_match.model_prototypes, &black_stone_proto);
 
-    ModelPrototype white_stone_proto = {
-        .geom = dynarr_at(&kfg_match.geometries, 1),
-        .diffuse = dynarr_at(&kfg_match.diffuse_textures, 2),
-        .normals = NULL
-    };
-    dynarr_push(&kfg_match.model_prototypes, &white_stone_proto);
+    // ModelPrototype white_stone_proto = {
+    //     .geom = dynarr_at(&kfg_match.geometries, 1),
+    //     .diffuse = dynarr_at(&kfg_match.diffuse_textures, 2),
+    //     .normals = NULL
+    // };
+    // dynarr_push(&kfg_match.model_prototypes, &white_stone_proto);
 
 
-    ModelInstance board_inst;
-    board_inst.prototype = dynarr_at(&kfg_match.model_prototypes, 0),
-    glm_mat4_identity(&board_inst.world_transform);
+    // ModelInstance board_inst;
+    // board_inst.prototype = dynarr_at(&kfg_match.model_prototypes, 0);
+    // glm_scale_make(board_inst.world_transform, (vec3){40, 40, 40});
+    // glm_rotate(board_inst.world_transform, -1.f * M_PI_2, XAXIS);
 
-    dynarr_push(&kfg_match.model_instances, &board_inst);
+    // dynarr_push(&kfg_match.model_instances, &board_inst);
 
+
+    Scene kfg_match;
+    // if(!import_scene(&kfg_match, "assets/scenes/go-board-basic.glb", true)) {
+    //     printf("error, could not import go match scene.\n");
+    // }
+    if(!import_scene(&kfg_match, "assets/scenes/go-board/go-board.gltf", true)) {
+        printf("error, could not import go match scene.\n");
+    }
+
+    // //puts the board, and the black and white stones at the origin
+    // for(usize i = 0; i < kfg_match.model_prototypes.len; i++) {
+    //     ModelInstance* m = dynarr_at(&kfg_match.model_prototypes, i);
+    //     glm_mat4_identity(m->world_transform);
+    // }
+
+
+
+
+    mat4 scale_match;
+    glm_scale_make(scale_match, (vec3){board_scale, board_scale, board_scale});
 
 
 
@@ -357,12 +383,12 @@ int main(int argc, const char* argv[]) {
 
 
 
-    glm_vec3_copy((vec3){-14.915992, 104.215508, -0.615611}, camera.pos);
-    glm_vec3_copy((vec3){-13.920774, 104.313194, -0.615634}, camera.target);
-    camera.y_fov = 0.954656;
-    camera.near_plane = 0.100000; 
-    camera.far_plane = 3000.000000;
-    camera.aspect = window_ratio_global;
+    // glm_vec3_copy((vec3){-14.915992, 104.215508, -0.615611}, camera.pos);
+    // glm_vec3_copy((vec3){-13.920774, 104.313194, -0.615634}, camera.target);
+    // camera.y_fov = 0.954656;
+    // camera.near_plane = 0.100000; 
+    // camera.far_plane = 3000.000000;
+    // camera.aspect = window_ratio_global;
 
     // glm_vec3_zero(camera.target);
     // glm_vec3_copy((vec3){5, 5, -5}, camera.pos);
@@ -370,6 +396,14 @@ int main(int argc, const char* argv[]) {
     // camera.near_plane = 0.100000; 
     // camera.far_plane = 300.000000;
     // camera.aspect = window_ratio_global;
+
+
+    glm_vec3_copy((vec3){-132.255875, 120.215515, -5.458469}, camera.pos);
+    glm_vec3_copy((vec3){-131.606308, 119.455688, -5.431660}, camera.target);
+    camera.y_fov = 0.954656;
+    camera.near_plane = 0.100000; 
+    camera.far_plane = 3000.000000;
+    camera.aspect = window_ratio_global;
 
     camera_update(&camera);
 
@@ -414,7 +448,7 @@ int main(int argc, const char* argv[]) {
             draw_all_model_instances(&setting.model_instances, model_matrix_loc);
 
     // draw the match
-            draw_all_model_instances(&kfg_match.model_instances, model_matrix_loc);
+            draw_all_model_instances_with_mat(&kfg_match.model_instances, scale_match, model_matrix_loc);
         }
 
         //present the render to the window and poll events

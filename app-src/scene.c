@@ -136,7 +136,8 @@ bool load_texture_from_mat(const char* pFile, Texture* tex, struct aiMaterial* m
         strcat(full_tex_path, rel_tex_path.data);
 
         //TODO: Detect alpha
-        *tex = tex_new(full_tex_path, false);
+        // *tex = tex_new(full_tex_path, false);
+        *tex = tex_new(full_tex_path);
     }
 
     return true;
@@ -273,8 +274,8 @@ bool import_scene(Scene* scene_out, const char* pFile, bool permissive) {
 
         FullGeometry* geom = dynarr_at(&geometries, i);
 
-        Texture** diffuse_tex = dynarr_at(&diffuse_textures, mat_idx);
-        Texture** normals_tex = dynarr_at(&normals_textures, mat_idx);
+        Texture* diffuse_tex = dynarr_at(&diffuse_textures, mat_idx);
+        Texture* normals_tex = dynarr_at(&normals_textures, mat_idx);
 
         ModelPrototype m = model_prototype_new(geom, diffuse_tex, normals_tex); //When we handle materials, this will be modified.
         dynarr_push(&model_prototypes, &m);
