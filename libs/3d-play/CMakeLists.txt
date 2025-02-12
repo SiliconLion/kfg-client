@@ -16,6 +16,7 @@ add_library(threeDplay
         src/texture.c
         src/transformation.c
         src/utilities.c
+        src/mesh-tools.c
         )
 #defines GL_SILENCE_DEPRECATION when threeDplay is compiled
 add_compile_definitions(threeDplay GL_SILENCE_DEPRECATION)

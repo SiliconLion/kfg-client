@@ -1,78 +1,76 @@
 #include "board.h"
 
-void stone_to_mat(mat4** ret, Stone* s, u32 row_count, u32 col_count) {
-    float row_width = 1.f / (float) row_count;
-    float col_width = 1.f / (float) col_count;
+KFG_Match match_new() {
+    KFG_Match match;
+    if(!import_scene(&match.s, "assets/scenes/go-board/go-board.gltf", true)) {
+        printf("error, could not import go match scene.\n");
+    }
 
-    float x = s->row * row_width + (.5 * row_width); 
-    float y = s->col * col_width + (.5 * col_width); 
-    float z = s->height + BOARD_HEIGHT;
+    dynarr_clear(&match.s.model_instances);
 
-    float v[3] = {x, y, z};
+    match.black_stone_proto = dynarr_at(&match.s.model_prototypes, 0);
+    match.white_stone_proto = dynarr_at(&match.s.model_prototypes, 1);
+    match.board_proto       = dynarr_at(&match.s.model_prototypes, 2);
 
-    glm_translate(*ret, v);
+    full_geom_normalize_verts_to(match.black_stone_proto->geom, 1.f/(BOARD_ROW_COUNT + 2));
+    full_geom_normalize_verts_to(match.white_stone_proto->geom, 1.f/(BOARD_ROW_COUNT + 2));
+    full_geom_normalize_verts_to(match.board_proto      ->geom, 1.f);
+
+
+
+    match.black_stones = dynarr_new(sizeof(ModelInstance), BOARD_ROW_COUNT * BOARD_COL_COUNT);
+    match.white_stones = dynarr_new(sizeof(ModelInstance), BOARD_ROW_COUNT * BOARD_COL_COUNT);
+
+    match.board_inst.prototype = match.board_proto;
+    glm_mat4_identity(match.board_inst.world_transform);
+
+    glm_scale_make(match.scale, (vec3){BOARD_SCALE, BOARD_SCALE, BOARD_SCALE});
+    // glm_mat4_identity(match.scale);
+
+
+    return match;
 }
 
-Board board_new(u32 row_count, u32 col_count) {
-    // Shader* board_shader = shad_new(
-    //         "shaders/board/board.vert",
-    //         "shaders/board/board.frag"
-    // );
-    // Shader* stone_shader = shad_new(
-    //         "shaders/board/stones.vert",
-    //         "shaders/board/stones.frag"
-    // );
-    // if(!board_shader || !stone_shader) {
-    //     printf("shader creation failure in board creation");
-    //     exit(-5);
-    // }
+void match_add_stone(KFG_Match* m, enum StoneColor color, u32 row, u32 col, f32 height) {
 
-   FullGeometry board_geometry = full_geom_from_stl(
-           "assets/models/go-board-basic.stl", GL_STATIC_DRAW);
-    // FullGeometry board_geometry = full_geom_from_stl(
-    //         "assets/models/baby-yoda.stl", GL_STATIC_DRAW);
-   FullGeometry stone_geometry = full_geom_from_stl(
-            "assets/models/go-stone-basic1.stl", GL_STATIC_DRAW);
+    //this code thinks of the board as being 1x1 centered on (0,0). so spanning -.5 to .5 in x and z respectively.
 
-//    ModelPrototype board_prototype = {
-//     .geom = board_geometry,
-//    }
+    //the distance between each grid square
+    //the +2 gives space for an empty row/col around the whole board.s
+    float delta_x = 1.f/ (float)(BOARD_ROW_COUNT + 2);
+    float delta_z = 1.f/ (float)(BOARD_COL_COUNT + 2);
+
+    //the edges of the board (could maybe be called "left/right and top/bottom" but i didn't want 
+    //to figure out which was which lmao)
+    float x_start = -.5f;
+    float z_start = -.5f;
 
 
+    float relative_x = delta_x * (row + 1) + x_start;
+    float relative_z = delta_z * (col + 1) + z_start;
 
+    float x = relative_x;
+    float z = relative_z;
 
-    dynarr stones = dynarr_new(sizeof(Stone), row_count * col_count);
+    // float x = relative_x;
+    // float z = relative_z;
 
-    return (Board){
-        .row_count = row_count,
-        .col_count = col_count,
-        .stones = stones,
-        // .board_shader = board_shader,
-        // .stones_shader = stone_shader,
+    ModelInstance inst;
+    glm_mat4_identity(inst.world_transform);
+    //ToDo: the .15 is a magic value that might not work with board sizes other than 19x19
+    glm_translate_to(inst.world_transform, (vec3){x, .15+ height, z}, inst.world_transform);
 
-    };
+    if(color == BLACK_STONE) {
+        inst.prototype = m->black_stone_proto;
+        dynarr_push(&m->black_stones, &inst);
+    } else {
+        inst.prototype = m->white_stone_proto;
+        dynarr_push(&m->white_stones, &inst);
+    }
 }
 
-// void board_delete(Board* b) {
-//     shad_delete(b->board_shader);
-//     shad_delete(b->stones_shader);
-//     full_geom_delete(&b->board_geometry);
-//     full_geom_delete(&b->stone_geometry);
-//     dynarr_delete(&b->stones);
-// }
-
-// void board_draw(Board* b, u32 world_transform_loc) {
-//     draw_model_from_mat(b->board_prototype, b->world_transform, world_transform_loc);
-
-//     for(usize i = 0; i < b->stones.len; i++) {
-//         Stone* s = dynarr_get(&b->stones, i);
-//         mat4 stone_matrix;
-//         stone_to_mat(&stone_matrix, s, b->row_count, b->col_count);
-
-//         mat4 stone_to_world;
-//         glm_mat4_mul(b->world_transform, stone_matrix, stone_to_world);
-
-//         draw_model_from_mat(b->stone_prototype, stone_to_world, world_transform_loc);
-//     }
-
-// }
+void match_draw(KFG_Match* m, u32 world_transform_loc) {
+    draw_model_instance_with_mat(&m->board_inst, m->scale, world_transform_loc);
+    draw_all_model_instances_with_mat(&m->black_stones, m->scale, world_transform_loc);
+    draw_all_model_instances_with_mat(&m->white_stones, m->scale, world_transform_loc);
+}

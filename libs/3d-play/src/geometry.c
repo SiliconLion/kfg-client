@@ -101,6 +101,23 @@ void full_geom_replace_verts_and_indices(FullGeometry* g, dynarr new_verts, dyna
 }
 
 
+void full_geom_normalize_verts_to(FullGeometry* g, float diameter) {
+    //TODO: This is a big assumption! that the position is the first field of the vertex. Really
+    //we need a `VERTEX_BLUEPRINT` type solution for finding the position. But for now, we assume 
+    //that `offsetof(VertexType) == 0`.
+    normalize_3d_vertices_to_cube(&g->vertices, 0, diameter);
+
+//update the gpu with our new vertices
+    full_geom_bind(g);
+
+    size_t len = g->vertices.len;
+    size_t stride = g->vertex_stride;
+    glBufferData(GL_ARRAY_BUFFER, len * stride, g->vertices.data, g->usage);
+
+    full_geom_unbind();
+}
+
+
 //creates a FullGeometry<ThreeNormPoint> from an stl file. path is the path to the stl file
 FullGeometry full_geom_from_stl(const char * path, GLenum usage) {
     stl_obj *obj = stl_from_file(path);

@@ -7,6 +7,7 @@
 #include "stlreader.h"
 #include "dynarr.h" //switch to CAVE_Vec when possible
 #include "vertices.h"
+#include "mesh-tools.h"
 
 
 #define INDEX_TYPE unsigned int
@@ -53,6 +54,10 @@ void full_geom_unbind();
 //note, takes ownership of new_verts and new_indices. Either can be empty, but why have a geometry
 //with no vertices?
 void full_geom_replace_verts_and_indices(FullGeometry* g, dynarr new_verts, dynarr new_indices);
+
+//basically just calls "normalize_vertices_to_cube" on the vertices from meshtools and then updates the gpu.
+void full_geom_normalize_verts_to(FullGeometry* g, float diameter);
+
 //creates a FullGeometry<ThreeNormPoint> from an stl file. path is the path to the stl file
 //Note: does not de-dupe vertices (ie, does not index the vertices, for the
 // stl format has everthing in terms of triangle. It can be done but isn't here).

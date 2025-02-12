@@ -10,7 +10,7 @@ uniform sampler2D NORMALS;
 
 void main() {
     vec3 ambientLightColor = normalize(vec3(0.8, 0.8, 1));
-    float ambientStrength = 0.3;
+    float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * ambientLightColor;
 
     vec3 objectColor = texture(DIFFUSE, TexCoord).rgb;

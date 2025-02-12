@@ -7,7 +7,7 @@ set(CMAKE_C_STANDARD 11)
 
 
 #This is the actual end product program
-add_executable(Client main.c board.c scene.c camera.c model.c helpers.c mesh-tools.c  dreadful-hacks.c )
+add_executable(Client main.c board.c scene.c camera.c model.c helpers.c dreadful-hacks.c )
 
 target_link_libraries(Client glfw)
 target_link_libraries(Client OpenGL::GL)
