@@ -28,6 +28,41 @@
 
 #include <unistd.h>
 
+typedef enum {
+    KFG_KEY_UP = 0,
+    KFG_KEY_DOWN = 1 
+} KeyStates;
+
+typedef struct  {
+    int W, A, S, D, SPACE, SHIFT, I, J, U, V, Z, X, ESC, ENTER;
+} KeyStateTracker;
+
+void print_kst(KeyStateTracker* kst) {
+    printf(
+        "KST {\n"
+        "       W: %u,\n"
+        "       A: %u,\n"
+        "       S: %u,\n"
+        "       D: %u,\n"
+        "       SPACE: %u,\n"
+        "       SHIFT: %u,\n"
+        "       I: %u,\n"
+        "       J: %u,\n"
+        "       U: %u,\n"
+        "       V: %u,\n"
+        "       Z: %u,\n"
+        "       X: %u,\n"
+        "       ESC: %u,\n"
+        "       ENTER: %u,\n"
+        "}\n",
+        kst->W, kst->A, kst->S, kst->D,
+        kst->SPACE, kst->SHIFT,
+        kst->I, kst->J, kst->U, kst->V,
+        kst->Z, kst->X,
+        kst->ESC, kst->ENTER
+    );
+}
+
 
 //global so callbacks can see them
 int windowWidth_global, windowHeight_global;
@@ -36,9 +71,10 @@ f32 window_ratio_global;
 u32 counter_global;
 
 Camera camera;
-f32 zoom_fac = 1.0;
-f32 rotation_fac = M_PI / 100.0;
-f32 movement_speed = 10;
+KeyStateTracker key_states;
+// f32 zoom_fac = 1.0;
+// f32 rotation_fac = M_PI / 100.0;
+// f32 movement_speed = 10;
 
 // f32 board_scale = 20.0;
 
@@ -59,155 +95,92 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     camera_update(&camera);
 }
 
-//closes the application when escape key is pressed
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-    }
-    if(key == GLFW_KEY_Z) {
-        camera.y_fov *= 0.95;
-        zoom_fac *= 0.95;
-    }
-    if(key == GLFW_KEY_X) {
-        camera.y_fov *= 1.05;
-        zoom_fac *= 1.05;
-    }
+
+void register_key_press(GLFWwindow* window, int key, int scancode, int action, int mods) {
+
+    if(key == GLFW_KEY_W && action == GLFW_PRESS){key_states.W = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_W && action == GLFW_RELEASE){key_states.W = KFG_KEY_UP;}
+    if(key == GLFW_KEY_W && action == GLFW_REPEAT){ /*no op*/}
+
+    if(key == GLFW_KEY_A && action == GLFW_PRESS){key_states.A = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_A && action == GLFW_RELEASE){key_states.A = KFG_KEY_UP;}
+    if(key == GLFW_KEY_A && action == GLFW_REPEAT){ /*no op*/}
+
+    if(key == GLFW_KEY_S && action == GLFW_PRESS){key_states.S = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_S && action == GLFW_RELEASE){key_states.S = KFG_KEY_UP;}
+    if(key == GLFW_KEY_S && action == GLFW_REPEAT){ /*no op*/}
+
+    if(key == GLFW_KEY_D && action == GLFW_PRESS){key_states.D = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_D && action == GLFW_RELEASE){key_states.D = KFG_KEY_UP;}
+    if(key == GLFW_KEY_D && action == GLFW_REPEAT){ /*no op*/}
 
 
-    if(key == GLFW_KEY_W) {
-        vec3 dir, delta;
-        camera_get_dir(&camera, dir);
+    if(key == GLFW_KEY_SPACE && action == GLFW_PRESS){key_states.SPACE = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_SPACE && action == GLFW_RELEASE){key_states.SPACE = KFG_KEY_UP;}
+    if(key == GLFW_KEY_SPACE && action == GLFW_REPEAT){ /*no op*/}
 
-        dir[1] = 0; //set y component to 0
+    if(key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS){key_states.SHIFT = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_LEFT_SHIFT && action == GLFW_RELEASE){key_states.SHIFT = KFG_KEY_UP;}
+    if(key == GLFW_KEY_LEFT_SHIFT && action == GLFW_REPEAT){ /*no op*/}
 
-        glm_vec3_scale(dir, zoom_fac*movement_speed, delta);
+    //just ignoring right shift for now to keep things simple
+    // if(key == GLFW_KEY_RIGHT_SHIFT && action == GLFW_PRESS){key_states.W = KFG_KEY_DOWN;}
+    // if(key == GLFW_KEY_RIGHT_SHIFT && action == GLFW_RELEASE){key_states.W = KFG_KEY_UP;}
+    // if(key == GLFW_KEY_RIGHT_SHIFT && action == GLFW_REPEAT){ /*no op*/}
 
-        glm_vec3_add(camera.pos, delta, camera.pos);
-        glm_vec3_add(camera.target, delta, camera.target);
+    if(key == GLFW_KEY_U && action == GLFW_PRESS){key_states.U = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_U && action == GLFW_RELEASE){key_states.U = KFG_KEY_UP;}
+    if(key == GLFW_KEY_U && action == GLFW_REPEAT){ /*no op*/}
 
-    }
-    if(key == GLFW_KEY_S) {
-        vec3 dir, delta;
-        camera_get_dir(&camera, dir);
+    if(key == GLFW_KEY_V && action == GLFW_PRESS){key_states.V = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_V && action == GLFW_RELEASE){key_states.V = KFG_KEY_UP;}
+    if(key == GLFW_KEY_V && action == GLFW_REPEAT){ /*no op*/}
 
-        dir[1] = 0; //set y component to 0
+    if(key == GLFW_KEY_I && action == GLFW_PRESS){key_states.I = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_I && action == GLFW_RELEASE){key_states.I = KFG_KEY_UP;}
+    if(key == GLFW_KEY_I && action == GLFW_REPEAT){ /*no op*/}
 
-        glm_vec3_scale(dir, -1.0 * zoom_fac*movement_speed, delta);
+    if(key == GLFW_KEY_J && action == GLFW_PRESS){key_states.J = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_J && action == GLFW_RELEASE){key_states.J = KFG_KEY_UP;}
+    if(key == GLFW_KEY_J && action == GLFW_REPEAT){ /*no op*/}
 
-        glm_vec3_add(camera.pos, delta, camera.pos);
-        glm_vec3_add(camera.target, delta, camera.target);
-    }
+    if(key == GLFW_KEY_Z && action == GLFW_PRESS){key_states.Z = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_Z && action == GLFW_RELEASE){key_states.Z = KFG_KEY_UP;}
+    if(key == GLFW_KEY_Z && action == GLFW_REPEAT){ /*no op*/}
 
-    if(key == GLFW_KEY_A) {
-        vec3 dir, delta;
-        camera_get_dir(&camera, dir);
+    if(key == GLFW_KEY_X && action == GLFW_PRESS){key_states.X = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_X && action == GLFW_RELEASE){key_states.X = KFG_KEY_UP;}
+    if(key == GLFW_KEY_X && action == GLFW_REPEAT){ /*no op*/}
 
-        glm_vec3_cross(up_dir_global, dir, delta);
-        glm_normalize(delta);
-        glm_vec3_scale(delta, movement_speed * zoom_fac, delta);
-        
-
-        glm_vec3_add(camera.pos, delta, camera.pos);
-        glm_vec3_add(camera.target, delta, camera.target);
-
-    }
-    if(key == GLFW_KEY_D) {
-        vec3 dir, delta;
-        camera_get_dir(&camera, dir);
-
-        glm_vec3_cross(up_dir_global, dir, delta);
-        glm_normalize(delta);
-        //multiplying by -1.0 reverses the direction.
-        glm_vec3_scale(delta, -1.0 * movement_speed * zoom_fac, delta);
-        
-
-        glm_vec3_add(camera.pos, delta, camera.pos);
-        glm_vec3_add(camera.target, delta, camera.target);
-
-    }
-
-    if(key == GLFW_KEY_SPACE) {
-        vec3 delta;
-        glm_vec3_scale(up_dir_global, movement_speed * zoom_fac, delta);
-
-        glm_vec3_add(camera.pos, delta, camera.pos);
-        glm_vec3_add(camera.target, delta, camera.target);
-    }
-
-    if(key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT) {
-        vec3 delta;
-        glm_vec3_scale(up_dir_global, -1.0* movement_speed * zoom_fac, delta);
-
-        glm_vec3_add(camera.pos, delta, camera.pos);
-        glm_vec3_add(camera.target, delta, camera.target);
-    }
-
-    if(key == GLFW_KEY_U) {
-        vec3 dir, axis; 
-        camera_get_dir(&camera, dir);
-
-        glm_vec3_cross(up_dir_global, dir, axis);
-        glm_normalize(axis);
-
-        glm_vec3_rotate(dir, -1.0 * rotation_fac, axis);
-        glm_vec3_add(camera.pos, dir, camera.target);
-
-        //may want to safeguard against ever looking straight up. 
-        //glm says it doesnt handle that
+    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){key_states.ESC = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE){key_states.ESC = KFG_KEY_UP;}
+    if(key == GLFW_KEY_ESCAPE && action == GLFW_REPEAT){ /*no op*/}
     
-    }
-    if(key == GLFW_KEY_V) {
-        vec3 dir, axis; 
-        camera_get_dir(&camera, dir);
-
-        glm_vec3_cross(up_dir_global, dir, axis);
-        glm_normalize(axis);
-
-        glm_vec3_rotate(dir, rotation_fac, axis);
-        glm_vec3_add(camera.pos, dir, camera.target);
-
-        //may want to safeguard against ever looking straight up. 
-        //glm says it doesnt handle that
-    }
+    if(key == GLFW_KEY_ENTER && action == GLFW_PRESS){key_states.ENTER = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_ENTER && action == GLFW_RELEASE){key_states.ENTER = KFG_KEY_UP;}
+    if(key == GLFW_KEY_ENTER && action == GLFW_REPEAT){ /*no op*/}
+}
 
 
-    if(key == GLFW_KEY_I) {
-        vec3 dir, axis; 
-        camera_get_dir(&camera, dir);
+void main_update_camera(CameraControler* cc, KeyStateTracker* kst, GLFWwindow* window) {
 
-        glm_vec3_rotate(dir, rotation_fac, up_dir_global);
-        glm_vec3_add(camera.pos, dir, camera.target);
+    if(kst->W == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_FORWARD);}
+    if(kst->A == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_LEFT);}
+    if(kst->S == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_BACKWARD);}
+    if(kst->D == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_RIGHT);}
 
-        //may want to safeguard against ever looking straight up. 
-        //glm says it doesnt handle that
-    }
+    if(kst->SPACE == KFG_KEY_DOWN) {cc_apply_action(cc, CA_FLOAT);}
+    if(kst->SHIFT == KFG_KEY_DOWN) {cc_apply_action(cc, CA_SINK);}
 
-    if(key == GLFW_KEY_J) {
-        vec3 dir, axis; 
-        camera_get_dir(&camera, dir);
+    if(kst->U == KFG_KEY_DOWN) {cc_apply_action(cc, CA_TILT_UP);}
+    if(kst->V == KFG_KEY_DOWN) {cc_apply_action(cc, CA_TILT_DOWN);}
+    if(kst->I == KFG_KEY_DOWN) {cc_apply_action(cc, CA_PAN_RIGHT);}
+    if(kst->J == KFG_KEY_DOWN) {cc_apply_action(cc, CA_PAN_LEFT);}
 
+    if(kst->Z == KFG_KEY_DOWN) {cc_apply_action(cc, CA_ZOOM_IN);}
+    if(kst->X == KFG_KEY_DOWN) {cc_apply_action(cc, CA_ZOOM_OUT);}
 
-        glm_vec3_rotate(dir, -1.0 * rotation_fac, up_dir_global);
-        glm_vec3_add(camera.pos, dir, camera.target);
-
-        //may want to safeguard against ever looking straight up. 
-        //glm says it doesnt handle that
-    }
-
-
-    if(key == GLFW_KEY_ENTER) {
-        printf("Camera stats\n");
-        printf("camera pos: [%f, %f, %f]\n", camera.pos[0], camera.pos[1], camera.pos[2]);
-        printf("camera target: [%f, %f, %f]\n", camera.target[0], camera.target[1], camera.target[2]);
-        printf("camera fov: %f\n", camera.y_fov);
-        printf("camera near plane %f\n", camera.near_plane);
-        printf("camera far plane %f\n", camera.far_plane);
-        printf("\n");
-    }
-
-    camera_update(&camera);
-
+    if(kst->ENTER == KFG_KEY_DOWN){camera_print(cc->c);}
 }
 
 
@@ -244,9 +217,11 @@ int main(int argc, const char* argv[]) {
 
     window_ratio_global = (float)windowWidth_global / (float)windowHeight_global;
 
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+
     //adding callbacks for
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetKeyCallback(window, key_callback);
+    glfwSetKeyCallback(window, register_key_press);
 
     //to avoid screen tearing.
     glfwSwapInterval(1);
@@ -261,8 +236,8 @@ int main(int argc, const char* argv[]) {
     vec3 YAXIS = {0.0f, 1.f, 0.f};
     vec3 ZAXIS = {0.0f, 0.f, 1.f};
 
-
-
+    //initializes all keys to be 0 aka KFG_KEY_UP
+    memset(&key_states, 0, sizeof(KeyStateTracker)); 
 
 
     Shader* model_shader = shad_new("shaders/model/model.vert", "shaders/model/model.frag");
@@ -339,6 +314,7 @@ int main(int argc, const char* argv[]) {
     // camera.far_plane = 3000.000000;
     // camera.aspect = window_ratio_global;
 
+    // Camera camera;
 
     glm_vec3_copy((vec3){150, 165, 150}, camera.pos);
     glm_vec3_copy((vec3){0, 0, 0}, camera.target);
@@ -348,6 +324,18 @@ int main(int argc, const char* argv[]) {
     camera.aspect = window_ratio_global;
 
     camera_update(&camera);
+
+    CameraControler cam_control = {
+        .c = &camera,
+        .forward_speed = 4, 
+        .backward_speed = 4,
+        .straif_speed = 4,
+        .float_speed = 4,
+        .tilt_speed = M_PI / 200.0,
+        .pan_speed = M_PI / 200.0,
+        .zoom_speed = 0.02
+    };
+
 
 
     u64 frames = 0;
@@ -365,7 +353,11 @@ int main(int argc, const char* argv[]) {
     }
 
     //the render loop
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window) && !key_states.ESC == KFG_KEY_DOWN) {
+        glfwPollEvents();
+        // print_kst(&key_states);
+        main_update_camera(&cam_control, &key_states, window);
+
 
         // if(frames % 30 == 0) {
         //     if(rand() % 2 == 0) {
@@ -416,9 +408,9 @@ int main(int argc, const char* argv[]) {
             match_draw(&match, model_matrix_loc);
         }
 
-        //present the render to the window and poll events
+        //present the render to the window 
         glfwSwapBuffers(window);
-        glfwPollEvents();
+        
 
         // GLERROR();
 

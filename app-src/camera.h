@@ -37,27 +37,59 @@ void camera_update(Camera* c);
 
 void camera_get_dir(Camera* c, vec3 dest); 
 
-
-
-
-typedef void CAMERA_INTERFACE_UPDATE_FN( f32 delta_u, f32 delta_v, f32 delta_zoom );
-
-
+void camera_print(Camera* c);
 
 typedef enum {
-    C_I_ORBIT, C_I_POV, /*C_I_TRACK */
-} CameraInterfaceType;
+    CA_MOVE_FORWARD, 
+    CA_MOVE_BACKWARD,
+    CA_MOVE_LEFT,
+    CA_MOVE_RIGHT,
+    CA_FLOAT,
+    CA_SINK,
+    CA_ZOOM_IN,
+    CA_ZOOM_OUT,
+    CA_TILT_UP,
+    CA_TILT_DOWN,
+    CA_PAN_LEFT,
+    CA_PAN_RIGHT
+} CameraAction;
 
 
 typedef struct {
-    Camera c;
-    CameraInterfaceType type;
-    CAMERA_INTERFACE_UPDATE_FN* update_fn;
-} CameraInterface;
+    Camera* c; //really this should probably have ownership of the camera, but for now, its fine that its a refrence
+
+    f32 forward_speed;
+    f32 backward_speed;
+    f32 straif_speed; //move left/right
+
+    f32 float_speed; //move up/down (ie, +/- y direction)
+
+    f32 zoom_speed; // must be in the half-open interval [0,1) 
+    f32 tilt_speed; //rotating up/down
+    f32 pan_speed; //rotating left/right
+} CameraControler ;
+
+void cc_apply_action(CameraControler* cc, CameraAction action);
+
+// typedef void CAMERA_INTERFACE_UPDATE_FN( f32 delta_u, f32 delta_v, f32 delta_zoom );
 
 
-void camera_interface_pov_update( f32 delta_u, f32 delta_v, f32 delta_zoom );
-void camera_interface_orbit_update( f32 delta_u, f32 delta_v, f32 delta_zoom );
 
-extern CAMERA_INTERFACE_UPDATE_FN* C_I_ORBIT_UPDATE;
-extern CAMERA_INTERFACE_UPDATE_FN* C_I_POV_UPDATE;
+// typedef enum {
+//     C_I_ORBIT, C_I_POV, /*C_I_TRACK */
+// } CameraInterfaceType;
+
+
+// typedef struct {
+//     Camera c;
+//     CameraInterfaceType type;
+//     CAMERA_INTERFACE_UPDATE_FN* update_fn;
+// } CameraInterface;
+
+
+// void camera_interface_pov_update( f32 delta_u, f32 delta_v, f32 delta_zoom );
+// void camera_interface_orbit_update( f32 delta_u, f32 delta_v, f32 delta_zoom );
+
+// extern CAMERA_INTERFACE_UPDATE_FN* C_I_ORBIT_UPDATE;
+// extern CAMERA_INTERFACE_UPDATE_FN* C_I_POV_UPDATE;
+

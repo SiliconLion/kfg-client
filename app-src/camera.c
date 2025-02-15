@@ -67,7 +67,6 @@ Camera camera_new(
 //    mat4x4_mul(ret, T, M);
 //}
 
-
 //call this on the camera any time you set a variable in the camera
 void camera_update(Camera* c) {
 
@@ -93,18 +92,177 @@ void camera_update(Camera* c) {
 
 void camera_get_dir(Camera* c, vec3 dest) {
     glm_vec3_sub(c->target, c->pos, dest);
-    glm_normalize(dest);
+    glm_normalize(dest); 
+}
+
+void camera_print(Camera* c) {
+    printf(
+        "Camera: {\n"
+        "           target: (%f, %f, %f),\n"
+        "           y_fov:       %f,\n"
+        "           aspect:      %f,\n"
+        "           near_plane:  %f,\n"
+        "           far_plane:   %f\n"
+        "}\n",
+        c->target[0], c->target[1], c->target[2],
+        c->y_fov, c->aspect, c->near_plane, c->far_plane
+    );
+}
+
+
+
+
+
+
+//ToDo: make this more abstract/cleaner, reduce code repetition 
+void cc_apply_action(CameraControler* cc, CameraAction action){
+    Camera* camera = cc->c;
+
+    switch (action) {
+        case CA_MOVE_FORWARD  : {
+            vec3 dir, delta;
+            camera_get_dir(camera, dir);
+
+            dir[1] = 0; //set y component to 0
+            glm_vec3_normalize(dir);
+
+            glm_vec3_scale(dir, cc->forward_speed, delta);
+
+            glm_vec3_add(camera->pos, delta, camera->pos);
+            glm_vec3_add(camera->target, delta, camera->target);
+            break;
+        }
+        case CA_MOVE_BACKWARD : {
+            vec3 dir, delta;
+            camera_get_dir(camera, dir);
+
+            dir[1] = 0; //set y component to 0
+            glm_vec3_normalize(dir);
+
+            glm_vec3_scale(dir, -1.0 * cc->backward_speed, delta);
+
+            glm_vec3_add(camera->pos, delta, camera->pos);
+            glm_vec3_add(camera->target, delta, camera->target);
+            break;
+        }
+
+        case CA_MOVE_LEFT   : {
+            vec3 dir, delta;
+            camera_get_dir(camera, dir);
+
+            glm_vec3_cross(up_dir_global, dir, delta);
+
+            glm_normalize(delta);
+            glm_vec3_scale(delta, cc->straif_speed, delta);
+            
+
+            glm_vec3_add(camera->pos, delta, camera->pos);
+            glm_vec3_add(camera->target, delta, camera->target);
+            break;
+
+        }
+
+        case CA_MOVE_RIGHT  : {
+            vec3 dir, delta;
+            camera_get_dir(camera, dir);
+
+            glm_vec3_cross(up_dir_global, dir, delta);
+            glm_normalize(delta);
+            //multiplying by -1.0 reverses the direction.
+            glm_vec3_scale(delta, -1.0 * cc->straif_speed, delta);
+            
+
+            glm_vec3_add(camera->pos, delta, camera->pos);
+            glm_vec3_add(camera->target, delta, camera->target);
+            break;
+
+        }
+        case CA_FLOAT         : {
+            vec3 delta;
+            glm_vec3_scale(up_dir_global, cc->float_speed, delta);
+
+            glm_vec3_add(camera->pos, delta, camera->pos);
+            glm_vec3_add(camera->target, delta, camera->target);
+            break;
+        }
+
+        case CA_SINK          : {
+            vec3 delta;
+            glm_vec3_scale(up_dir_global, -1.0* cc->float_speed, delta);
+
+            glm_vec3_add(camera->pos, delta, camera->pos);
+            glm_vec3_add(camera->target, delta, camera->target);
+            break;
+        }
+
+        case CA_ZOOM_IN       : {
+            // cc->c.y_fov *= 0.95;
+            camera->y_fov *= (1 - cc->zoom_speed);
+            break;
+        }
+        case CA_ZOOM_OUT      : {
+            // cc->c.y_fov *= 1.05;
+            camera->y_fov *= (1 + cc->zoom_speed);
+            break;
+        }
+        case CA_TILT_UP       : {
+            vec3 dir, axis; 
+            camera_get_dir(camera, dir);
+
+            glm_vec3_cross(up_dir_global, dir, axis);
+            glm_normalize(axis);
+
+            glm_vec3_rotate(dir, -1.0 * cc->tilt_speed, axis);
+            glm_vec3_add(camera->pos, dir, camera->target);
+
+            //ToDo: may want to safeguard against ever looking straight up. 
+            //glm says it doesnt handle that
+            break;
+        }
+        case CA_TILT_DOWN     : {
+            vec3 dir, axis; 
+            camera_get_dir(camera, dir);
+
+            glm_vec3_cross(up_dir_global, dir, axis);
+            glm_normalize(axis);
+
+            glm_vec3_rotate(dir, cc->tilt_speed, axis);
+            glm_vec3_add(camera->pos, dir, camera->target);
+            break;
+        }
+
+        case CA_PAN_LEFT      : {
+            vec3 dir, axis; 
+            camera_get_dir(camera, dir);
+
+            glm_vec3_rotate(dir, cc->pan_speed, up_dir_global);
+            glm_vec3_add(camera->pos, dir, camera->target);
+            break;
+        }
+
+        case CA_PAN_RIGHT     : {
+            vec3 dir, axis; 
+            camera_get_dir(camera, dir);
+
+
+            glm_vec3_rotate(dir, -1.0 * cc->pan_speed, up_dir_global);
+            glm_vec3_add(camera->pos, dir, camera->target);
+            break;
+        }
+    }
+
+    camera_update(camera);
     return;
 }
 
 
 
-void camera_interface_pov_update( f32 delta_u, f32 delta_v, f32 delta_zoom ) {
+// void camera_interface_pov_update( f32 delta_u, f32 delta_v, f32 delta_zoom ) {
 
-}
-void camera_interface_orbit_update( f32 delta_u, f32 delta_v, f32 delta_zoom)  {
+// }
+// void camera_interface_orbit_update( f32 delta_u, f32 delta_v, f32 delta_zoom)  {
 
-}
+// }
 
-CAMERA_INTERFACE_UPDATE_FN* C_I_POV_UPDATE = camera_interface_pov_update;
-CAMERA_INTERFACE_UPDATE_FN* C_I_ORBIT_UPDATE = camera_interface_orbit_update;
+// CAMERA_INTERFACE_UPDATE_FN* C_I_POV_UPDATE = camera_interface_pov_update;
+// CAMERA_INTERFACE_UPDATE_FN* C_I_ORBIT_UPDATE = camera_interface_orbit_update;
