@@ -51,7 +51,9 @@ typedef enum {
     CA_TILT_UP,
     CA_TILT_DOWN,
     CA_PAN_LEFT,
-    CA_PAN_RIGHT
+    CA_PAN_RIGHT,
+    CA_CIRCLE_TARGET_RIGHT,
+    CA_CIRCLE_TARGET_LEFT,
 } CameraAction;
 
 

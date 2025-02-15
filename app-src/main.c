@@ -34,7 +34,7 @@ typedef enum {
 } KeyStates;
 
 typedef struct  {
-    int W, A, S, D, SPACE, SHIFT, I, J, U, V, Z, X, ESC, ENTER;
+    int W, A, S, D, SPACE, SHIFT, I, J, U, V, Z, X, M, ESC, ENTER;
 } KeyStateTracker;
 
 void print_kst(KeyStateTracker* kst) {
@@ -52,6 +52,7 @@ void print_kst(KeyStateTracker* kst) {
         "       V: %u,\n"
         "       Z: %u,\n"
         "       X: %u,\n"
+        "       M: %u,\n"
         "       ESC: %u,\n"
         "       ENTER: %u,\n"
         "}\n",
@@ -59,6 +60,7 @@ void print_kst(KeyStateTracker* kst) {
         kst->SPACE, kst->SHIFT,
         kst->I, kst->J, kst->U, kst->V,
         kst->Z, kst->X,
+        kst->M,
         kst->ESC, kst->ENTER
     );
 }
@@ -72,11 +74,7 @@ u32 counter_global;
 
 Camera camera;
 KeyStateTracker key_states;
-// f32 zoom_fac = 1.0;
-// f32 rotation_fac = M_PI / 100.0;
-// f32 movement_speed = 10;
-
-// f32 board_scale = 20.0;
+bool camera_mode_is_manual = false;
 
 //on a GLFW error, will print the error
 void error_callback(int error, const char* description) {
@@ -152,6 +150,13 @@ void register_key_press(GLFWwindow* window, int key, int scancode, int action, i
     if(key == GLFW_KEY_X && action == GLFW_RELEASE){key_states.X = KFG_KEY_UP;}
     if(key == GLFW_KEY_X && action == GLFW_REPEAT){ /*no op*/}
 
+    if(key == GLFW_KEY_M && action == GLFW_PRESS){key_states.M = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_M && action == GLFW_RELEASE){
+        key_states.M = KFG_KEY_UP;
+        camera_mode_is_manual = !camera_mode_is_manual;
+        }
+    if(key == GLFW_KEY_M && action == GLFW_REPEAT){ /*no op*/}
+
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){key_states.ESC = KFG_KEY_DOWN;}
     if(key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE){key_states.ESC = KFG_KEY_UP;}
     if(key == GLFW_KEY_ESCAPE && action == GLFW_REPEAT){ /*no op*/}
@@ -164,21 +169,26 @@ void register_key_press(GLFWwindow* window, int key, int scancode, int action, i
 
 void main_update_camera(CameraControler* cc, KeyStateTracker* kst, GLFWwindow* window) {
 
-    if(kst->W == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_FORWARD);}
-    if(kst->A == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_LEFT);}
-    if(kst->S == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_BACKWARD);}
-    if(kst->D == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_RIGHT);}
 
-    if(kst->SPACE == KFG_KEY_DOWN) {cc_apply_action(cc, CA_FLOAT);}
-    if(kst->SHIFT == KFG_KEY_DOWN) {cc_apply_action(cc, CA_SINK);}
+    if(camera_mode_is_manual) {
+        if(kst->W == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_FORWARD);}
+        if(kst->A == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_LEFT);}
+        if(kst->S == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_BACKWARD);}
+        if(kst->D == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_RIGHT);}
 
-    if(kst->U == KFG_KEY_DOWN) {cc_apply_action(cc, CA_TILT_UP);}
-    if(kst->V == KFG_KEY_DOWN) {cc_apply_action(cc, CA_TILT_DOWN);}
-    if(kst->I == KFG_KEY_DOWN) {cc_apply_action(cc, CA_PAN_RIGHT);}
-    if(kst->J == KFG_KEY_DOWN) {cc_apply_action(cc, CA_PAN_LEFT);}
+        if(kst->SPACE == KFG_KEY_DOWN) {cc_apply_action(cc, CA_FLOAT);}
+        if(kst->SHIFT == KFG_KEY_DOWN) {cc_apply_action(cc, CA_SINK);}
 
-    if(kst->Z == KFG_KEY_DOWN) {cc_apply_action(cc, CA_ZOOM_IN);}
-    if(kst->X == KFG_KEY_DOWN) {cc_apply_action(cc, CA_ZOOM_OUT);}
+        if(kst->U == KFG_KEY_DOWN) {cc_apply_action(cc, CA_TILT_UP);}
+        if(kst->V == KFG_KEY_DOWN) {cc_apply_action(cc, CA_TILT_DOWN);}
+        if(kst->I == KFG_KEY_DOWN) {cc_apply_action(cc, CA_PAN_RIGHT);}
+        if(kst->J == KFG_KEY_DOWN) {cc_apply_action(cc, CA_PAN_LEFT);}
+
+        if(kst->Z == KFG_KEY_DOWN) {cc_apply_action(cc, CA_ZOOM_IN);}
+        if(kst->X == KFG_KEY_DOWN) {cc_apply_action(cc, CA_ZOOM_OUT);}
+    } else {
+        cc_apply_action(cc, CA_CIRCLE_TARGET_RIGHT);
+    }
 
     if(kst->ENTER == KFG_KEY_DOWN){camera_print(cc->c);}
 }
@@ -353,7 +363,7 @@ int main(int argc, const char* argv[]) {
     }
 
     //the render loop
-    while (!glfwWindowShouldClose(window) && !key_states.ESC == KFG_KEY_DOWN) {
+    while (!glfwWindowShouldClose(window) && key_states.ESC != KFG_KEY_DOWN) {
         glfwPollEvents();
         // print_kst(&key_states);
         main_update_camera(&cam_control, &key_states, window);
@@ -415,7 +425,7 @@ int main(int argc, const char* argv[]) {
         // GLERROR();
 
         frames += 1;
-        usleep(1000/60);
+        usleep(1000/180);
     }
 
     //TODO: Delete models

@@ -249,6 +249,29 @@ void cc_apply_action(CameraControler* cc, CameraAction action){
             glm_vec3_add(camera->pos, dir, camera->target);
             break;
         }
+
+        case CA_CIRCLE_TARGET_RIGHT: {
+            // vec3 dir, rev_dir; //rev_dir is vector from target to pos
+            // camera_get_dir(camera, dir);
+
+            // glm_vec3_negate_to(dir, rev_dir);
+            // glm_vec3_rotate(rev_dir, .5*cc->pan_speed, up_dir_global);
+            // glm_vec3_add(camera->pos, rev_dir, camera->target);
+
+            vec3 dir;
+            glm_vec3_sub(camera->pos, camera->target, dir);
+            glm_vec3_rotate(dir, .1*cc->pan_speed, up_dir_global);
+            glm_vec3_add(dir, camera->target, camera->pos);
+            break;
+        }
+
+        case CA_CIRCLE_TARGET_LEFT : {
+            vec3 dir;
+            glm_vec3_sub(camera->pos, camera->target, dir);
+            glm_vec3_rotate(dir, -.1*cc->pan_speed, up_dir_global);
+            glm_vec3_add(dir, camera->target, camera->pos);
+            break;
+        }
     }
 
     camera_update(camera);
