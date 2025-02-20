@@ -313,12 +313,12 @@ int main(int argc, const char* argv[]) {
 
     Shader* model_shader = shad_new("shaders/model/model.vert", "shaders/model/model.frag");
     GLERROR();
-    u32 model_matrix_loc = glGetUniformLocation(model_shader->program, "model");
-    u32 model_view_loc = glGetUniformLocation(model_shader->program, "view");
-    u32 model_perspective_loc = glGetUniformLocation(model_shader->program, "perspective");
+    i32 model_matrix_loc = glGetUniformLocation(model_shader->program, "model");
+    i32 model_view_loc = glGetUniformLocation(model_shader->program, "view");
+    i32 model_perspective_loc = glGetUniformLocation(model_shader->program, "perspective");
 
-    u32 model_diffuse_loc = glGetUniformLocation(model_shader->program, "DIFFUSE");
-    u32 model_normals_loc = glGetUniformLocation(model_shader->program, "NORMALS");
+    i32 model_diffuse_loc = glGetUniformLocation(model_shader->program, "DIFFUSE");
+    i32 model_normals_loc = glGetUniformLocation(model_shader->program, "NORMALS");
 
     shad_bind(model_shader);
     glUniform1i(model_diffuse_loc, 0);
@@ -461,7 +461,7 @@ int main(int argc, const char* argv[]) {
                     model_view_loc,
                     1,
                     GL_FALSE,// column major order
-                    camera.view
+                    (const float *)camera.view
             );
             // GLERROR();
             //bind perspective matrix
@@ -469,7 +469,7 @@ int main(int argc, const char* argv[]) {
                     model_perspective_loc,
                     1,
                     GL_FALSE,// column major order
-                    camera.perspective
+                    (const float *)camera.perspective
             );
             // GLERROR();
 

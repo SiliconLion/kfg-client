@@ -31,7 +31,7 @@ typedef struct {
 //tex can be null
 ModelPrototype model_prototype_new(FullGeometry* geom, Texture* diffuse, Texture* normals);
 
-void draw_model_from_mat(ModelPrototype* m, mat4 transform, u32 world_matrix_loc);
+void draw_model_from_mat(ModelPrototype* m, mat4 transform, i32 world_matrix_loc);
 
 //Model model_from_stl_file(const char* path);
 
@@ -68,12 +68,12 @@ typedef struct {
 
 ModelInstance model_instance_new(ModelPrototype* p, mat4 world_transform);
 
-void draw_model_instance(ModelInstance* inst, u32 world_matrix_loc);
+void draw_model_instance(ModelInstance* inst, i32 world_matrix_loc);
 
-void draw_model_instance_with_mat(ModelInstance* inst, mat4 transform, u32 world_matrix_loc);
+void draw_model_instance_with_mat(ModelInstance* inst, mat4 transform, i32 world_matrix_loc);
 
 //instances is Vec<ModelInstance>
-void draw_all_model_instances(dynarr* instances, u32 world_matrix_loc);
+void draw_all_model_instances(dynarr* instances, i32 world_matrix_loc);
 
-void draw_all_model_instances_with_mat(dynarr* instances, mat4 transform, u32 world_matrix_loc);
+void draw_all_model_instances_with_mat(dynarr* instances, mat4 transform, i32 world_matrix_loc);
 

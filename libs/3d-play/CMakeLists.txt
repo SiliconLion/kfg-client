@@ -1,3 +1,5 @@
+set(CMAKE_C_STANDARD 11)
+
 #defines the target and sources for 3dplay. unfortunately, not a very identifier friendly
 #name, so going with threeDplay instead
 add_library(threeDplay
