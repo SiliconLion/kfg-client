@@ -1,6 +1,7 @@
 #include "camera.h"
 #include <stdio.h>
 //#include "helpers.h"
+#include <cglm/cglm.h>
 
 vec3 up_dir_global = {0.f, 1.0f, 0.0f}; //global up
 

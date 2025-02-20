@@ -7,24 +7,23 @@
 
 #include "omni-include.h"
 
+// #include "../libs/3d-play/lib/omni-include.h"
+
 #include <stdbool.h>
 #include <string.h>
 
-#include "stlreader.h"
-#include "geometry.h"
-#include "shader.h"
-#include "texture.h"
-#include "model.h"
 #include "camera.h"
 #include "board.h"
-#include "error-handling.h"
-#include "primatives.h"
-#include "helpers.h"
-#include "dreadful-hacks.h"
 #include "scene.h"
+#include "record.h"
+
+
+#include "error-handling.h"
 
 #define CGLM_DEFINE_PRINTS
 #include "cglm/cglm.h"
+
+#include "SDL3/SDL.h"
 
 #include <unistd.h>
 
@@ -196,6 +195,10 @@ void main_update_camera(CameraControler* cc, KeyStateTracker* kst, GLFWwindow* w
 
 int main(int argc, const char* argv[]) {
 
+    if(!SDL_Init(0)) {
+        printf("oh geez. sdl couldn't initialize.");
+    }
+
     f32 BOARD_WIDTH = 8.0;
     f32 BOARD_HEIGHT = 2.0;
 
@@ -285,46 +288,23 @@ int main(int argc, const char* argv[]) {
 
     GLERROR();
 
+    const char* record_path = "assets/game-records/game_export";
+    GameRecord record = game_record_new(record_path);
+    // while(record.curr_line != NULL) {
+    //     game_record_next_iter(&record);
+    // }
+    // printf("All lines in game record parsed");
+    
 
     KFG_Match match = match_new();
-
+    // game_record_apply_to_board(&record, &match);
+    
     
 
 
     glDisable(GL_CULL_FACE);
 
 
-
-    // glm_vec3_copy((vec3){-14.915992, 104.215508, -0.615611}, camera.pos);
-    // glm_vec3_copy((vec3){-13.920774, 104.313194, -0.615634}, camera.target);
-    // camera.y_fov = 0.954656;
-    // camera.near_plane = 0.100000; 
-    // camera.far_plane = 3000.000000;
-    // camera.aspect = window_ratio_global;
-
-    // glm_vec3_zero(camera.target);
-    // glm_vec3_copy((vec3){5, 5, -5}, camera.pos);
-    // camera.y_fov = 0.954656;
-    // camera.near_plane = 0.100000; 
-    // camera.far_plane = 300.000000;
-    // camera.aspect = window_ratio_global;
-
-
-    // glm_vec3_copy((vec3){-132.255875, 120.215515, -5.458469}, camera.pos);
-    // glm_vec3_copy((vec3){-131.606308, 119.455688, -5.431660}, camera.target);
-    // camera.y_fov = 0.954656;
-    // camera.near_plane = 0.100000; 
-    // camera.far_plane = 300.000000;
-    // camera.aspect = window_ratio_global;
-
-    // glm_vec3_copy((vec3){-22.102026, 24.215515, -0.912067}, camera.pos);
-    // glm_vec3_copy((vec3){0, 0, 0}, camera.target);
-    // camera.y_fov = 0.954656;
-    // camera.near_plane = 0.100000; 
-    // camera.far_plane = 3000.000000;
-    // camera.aspect = window_ratio_global;
-
-    // Camera camera;
 
     glm_vec3_copy((vec3){150, 165, 150}, camera.pos);
     glm_vec3_copy((vec3){0, 0, 0}, camera.target);
@@ -350,17 +330,23 @@ int main(int argc, const char* argv[]) {
 
     u64 frames = 0;
 
-    u32 stone_count = 0;
+    // u32 stone_count = 0;
 
-    while(stone_count < BOARD_ROW_COUNT * BOARD_COL_COUNT) {
-        if(rand() % 2 == 0) {
-            match_add_stone(&match, BLACK_STONE, stone_count / BOARD_ROW_COUNT, stone_count % BOARD_ROW_COUNT, 0);
-        } else {
-            match_add_stone(&match, WHITE_STONE, stone_count / BOARD_ROW_COUNT, stone_count % BOARD_ROW_COUNT, 0);
-        }
+    // while(stone_count < BOARD_ROW_COUNT * BOARD_COL_COUNT) {
+    //     if(rand() % 2 == 0) {
+    //         match_add_stone(&match, BLACK_STONE, stone_count / BOARD_ROW_COUNT, stone_count % BOARD_ROW_COUNT, 0);
+    //     } else {
+    //         match_add_stone(&match, WHITE_STONE, stone_count / BOARD_ROW_COUNT, stone_count % BOARD_ROW_COUNT, 0);
+    //     }
 
-        stone_count += 1;
-    }
+    //     stone_count += 1;
+    // }
+
+    
+    unsigned int lastTime = 0, currentTime;
+    
+    
+
 
     //the render loop
     while (!glfwWindowShouldClose(window) && key_states.ESC != KFG_KEY_DOWN) {
@@ -369,15 +355,16 @@ int main(int argc, const char* argv[]) {
         main_update_camera(&cam_control, &key_states, window);
 
 
-        // if(frames % 30 == 0) {
-        //     if(rand() % 2 == 0) {
-        //         match_add_stone(&match, BLACK_STONE, stone_count / 19, stone_count % 19, norm_rand());
-        //     } else {
-        //         match_add_stone(&match, WHITE_STONE, stone_count / 19, stone_count % 19, norm_rand());
-        //     }
 
-        //     stone_count += 1;
-        // }
+        // Print a report once per second
+        currentTime = SDL_GetTicks();
+        if (currentTime > lastTime + 20) {
+            // advance_match(&match, )
+            game_record_next_iter(&record);
+            game_record_apply_to_board(&record, &match);
+            lastTime = currentTime;
+        }
+
 
 
         //just clears the screen for rendering

@@ -69,6 +69,11 @@ void match_add_stone(KFG_Match* m, enum StoneColor color, u32 row, u32 col, f32 
     }
 }
 
+void match_clear_stones(KFG_Match* m) {
+    dynarr_clear(&m->black_stones);
+    dynarr_clear(&m->white_stones);
+}
+
 void match_draw(KFG_Match* m, u32 world_transform_loc) {
     draw_model_instance_with_mat(&m->board_inst, m->scale, world_transform_loc);
     draw_all_model_instances_with_mat(&m->black_stones, m->scale, world_transform_loc);

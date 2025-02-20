@@ -39,4 +39,6 @@ KFG_Match match_new();
 
 void match_add_stone(KFG_Match* m, enum StoneColor color, u32 row, u32 col, f32 height);
 
+void match_clear_stones(KFG_Match* m);
+
 void match_draw(KFG_Match* m, u32 world_transform_loc);
