@@ -75,6 +75,9 @@ Camera camera;
 KeyStateTracker key_states;
 bool camera_mode_is_manual = false;
 
+u32 const target_fps = 60;
+u32 const target_frame_ms = 1000.f / (float) target_fps;
+
 //on a GLFW error, will print the error
 void error_callback(int error, const char* description) {
     fprintf(stderr, "Error: %s\n", description);
@@ -398,28 +401,46 @@ int main(int argc, const char* argv[]) {
     // }
 
     
-    unsigned int lastTime = 0, currentTime;
+    u32 frame_start = 0, currentTime;
     
-    
+    u32 last_board_update_time = 0;
+    u32 last_fps_update_time = 0;
+
+    u32 const framespan = 100;
+    u32 frame_lengths[100] = {0};
 
 
     //the render loop
     while (!glfwWindowShouldClose(window) && key_states.ESC != KFG_KEY_DOWN) {
+
+        frame_start = SDL_GetTicks();
+
+
         glfwPollEvents();
         // print_kst(&key_states);
         main_update_camera(&cam_control, &key_states, window);
 
-
-
-        // Print a report once per second
+//update board once every ~40 ms
         currentTime = SDL_GetTicks();
-        if (currentTime > lastTime + 20) {
-            // advance_match(&match, )
+        if (currentTime > last_board_update_time + 40) {
             game_record_next_iter(&record);
             game_record_apply_to_board(&record, &match);
-            lastTime = currentTime;
+            last_board_update_time = currentTime;
         }
 
+        //prints average frame length every so often
+        //tbh im not totally sure this is working toally correctly.
+        currentTime = SDL_GetTicks();
+        if(currentTime > last_fps_update_time + 1500) {
+            u32 sum = 0;
+            for(int i = 0; i < framespan; i++) {
+                sum += frame_lengths[i];
+            }
+
+            u32 average = sum / framespan;
+            printf("Average frame length is %u ms.\n", average);
+            last_fps_update_time = currentTime;
+        }
 
 
         //just clears the screen for rendering
@@ -465,9 +486,18 @@ int main(int argc, const char* argv[]) {
         
 
         // GLERROR();
-
         frames += 1;
-        usleep(1000/180);
+
+        currentTime = SDL_GetTicks();
+        u32 frame_length = currentTime - frame_start;
+
+        frame_lengths[frames % framespan] = frame_length; //this will rollover and overwrite itself which is what we want.
+
+        i32 sleep_dir = target_frame_ms - frame_length;
+        if(sleep_dir > 0) {
+            SDL_Delay(sleep_dir);
+        }
+
     }
 
     //TODO: Delete models
