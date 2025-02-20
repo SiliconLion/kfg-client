@@ -175,21 +175,21 @@ void main_update_camera(CameraControler* cc, KeyStateTracker* kst, GLFWwindow* w
 
     if(camera_mode_is_manual) {
     //Keyboard controls
-        if(kst->W == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_FORWARD);}
-        if(kst->A == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_LEFT);}
-        if(kst->S == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_BACKWARD);}
-        if(kst->D == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_RIGHT);}
+        if(kst->W == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_FORWARD, NULL);}
+        if(kst->A == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_LEFT, NULL);}
+        if(kst->S == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_BACKWARD, NULL);}
+        if(kst->D == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_RIGHT, NULL);}
 
-        if(kst->SPACE == KFG_KEY_DOWN) {cc_apply_action(cc, CA_FLOAT);}
-        if(kst->SHIFT == KFG_KEY_DOWN) {cc_apply_action(cc, CA_SINK);}
+        if(kst->SPACE == KFG_KEY_DOWN) {cc_apply_action(cc, CA_FLOAT, NULL);}
+        if(kst->SHIFT == KFG_KEY_DOWN) {cc_apply_action(cc, CA_SINK, NULL);}
 
-        if(kst->U == KFG_KEY_DOWN) {cc_apply_action(cc, CA_TILT_UP);}
-        if(kst->V == KFG_KEY_DOWN) {cc_apply_action(cc, CA_TILT_DOWN);}
-        if(kst->I == KFG_KEY_DOWN) {cc_apply_action(cc, CA_PAN_RIGHT);}
-        if(kst->J == KFG_KEY_DOWN) {cc_apply_action(cc, CA_PAN_LEFT);}
+        if(kst->U == KFG_KEY_DOWN) {cc_apply_action(cc, CA_TILT_UP, NULL);}
+        if(kst->V == KFG_KEY_DOWN) {cc_apply_action(cc, CA_TILT_DOWN, NULL);}
+        if(kst->I == KFG_KEY_DOWN) {cc_apply_action(cc, CA_PAN_RIGHT, NULL);}
+        if(kst->J == KFG_KEY_DOWN) {cc_apply_action(cc, CA_PAN_LEFT, NULL);}
 
-        if(kst->Z == KFG_KEY_DOWN) {cc_apply_action(cc, CA_ZOOM_IN);}
-        if(kst->X == KFG_KEY_DOWN) {cc_apply_action(cc, CA_ZOOM_OUT);}
+        if(kst->Z == KFG_KEY_DOWN) {cc_apply_action(cc, CA_ZOOM_IN, NULL);}
+        if(kst->X == KFG_KEY_DOWN) {cc_apply_action(cc, CA_ZOOM_OUT, NULL);}
 
     //Gamepad controls
         //this checks that `GLF_JOYSTICK_1` is present and is a game pad and gets its state. I guess there could be a problem if a different
@@ -204,29 +204,33 @@ void main_update_camera(CameraControler* cc, KeyStateTracker* kst, GLFWwindow* w
         
             // input_speed(state.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER]);
 
-            float move_left_right = state.axes[GLFW_GAMEPAD_AXIS_LEFT_X];
-            if(move_left_right < -.1) {cc_apply_action(cc, CA_MOVE_LEFT);} else 
-            if(move_left_right > .1) {cc_apply_action(cc, CA_MOVE_RIGHT);}
+            float l_x_axis = state.axes[GLFW_GAMEPAD_AXIS_LEFT_X];
+            float abs_l_x = fabs(l_x_axis);
+            if(l_x_axis < -.1) {cc_apply_action(cc, CA_MOVE_LEFT, &abs_l_x);} else
+            if(l_x_axis > .1) {cc_apply_action(cc, CA_MOVE_RIGHT, &abs_l_x);}
 
-            float move_forward_back = state.axes[GLFW_GAMEPAD_AXIS_LEFT_Y];
-            if(move_forward_back < -.1) {cc_apply_action(cc, CA_MOVE_FORWARD);} else 
-            if(move_forward_back > .1) {cc_apply_action(cc, CA_MOVE_BACKWARD);}
+            float l_y_axis = state.axes[GLFW_GAMEPAD_AXIS_LEFT_Y];
+            float abs_l_y = fabs(l_y_axis);
+            if(l_y_axis < -.1) {cc_apply_action(cc, CA_MOVE_FORWARD, &abs_l_y);} else
+            if(l_y_axis > .1) {cc_apply_action(cc, CA_MOVE_BACKWARD, &abs_l_y);}
 
-            float pan_left_right = state.axes[GLFW_GAMEPAD_AXIS_RIGHT_X];
-            if(pan_left_right < -.1) {cc_apply_action(cc, CA_PAN_LEFT);} else 
-            if(pan_left_right > .1) {cc_apply_action(cc, CA_PAN_RIGHT);}
+            float r_x_axis = state.axes[GLFW_GAMEPAD_AXIS_RIGHT_X];
+            float abs_r_x = fabs(r_x_axis);
+            if(r_x_axis < -.1) {cc_apply_action(cc, CA_PAN_LEFT, &abs_r_x);} else
+            if(r_x_axis > .1) {cc_apply_action(cc, CA_PAN_RIGHT, &abs_r_x);}
 
-            float tilt_up_down = state.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y];
-            if(tilt_up_down < -.1) {cc_apply_action(cc, CA_TILT_UP);} else 
-            if(tilt_up_down > .1) {cc_apply_action(cc, CA_TILT_DOWN);}
+            float r_y_axis = state.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y];
+            float abs_r_y = fabs(r_y_axis);
+            if(r_y_axis < -.1) {cc_apply_action(cc, CA_TILT_UP, &abs_r_y);} else
+            if(r_y_axis > .1) {cc_apply_action(cc, CA_TILT_DOWN, &abs_r_y);}
 
             if(state.buttons[GLFW_GAMEPAD_BUTTON_LEFT_BUMPER] && state.buttons[GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER]) {/*do nothing*/} else 
-            if(state.buttons[GLFW_GAMEPAD_BUTTON_LEFT_BUMPER]) {cc_apply_action(cc, CA_SINK);} else 
-            if(state.buttons[GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER]) {cc_apply_action(cc, CA_FLOAT);}
+            if(state.buttons[GLFW_GAMEPAD_BUTTON_LEFT_BUMPER]) {cc_apply_action(cc, CA_SINK, NULL);} else 
+            if(state.buttons[GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER]) {cc_apply_action(cc, CA_FLOAT, NULL);}
 
             if(state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP] && state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_DOWN]) {/*do nothing*/} else 
-            if(state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP]) {cc_apply_action(cc, CA_ZOOM_IN);} else 
-            if(state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_DOWN]) {cc_apply_action(cc, CA_ZOOM_OUT);}
+            if(state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP]) {cc_apply_action(cc, CA_ZOOM_IN, NULL);} else 
+            if(state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_DOWN]) {cc_apply_action(cc, CA_ZOOM_OUT, NULL);}
 
             // for(int i = 0; i < GLFW_GAMEPAD_BUTTON_LAST; i++) {
             //     if(state.buttons[i]) {printf("Gamepad button pressed: %u\n", i);}
@@ -236,7 +240,7 @@ void main_update_camera(CameraControler* cc, KeyStateTracker* kst, GLFWwindow* w
 
 
     } else {
-        cc_apply_action(cc, CA_CIRCLE_TARGET_RIGHT);
+        cc_apply_action(cc, CA_CIRCLE_TARGET_RIGHT, NULL);
     }
 
     if(kst->ENTER == KFG_KEY_DOWN){camera_print(cc->c);}

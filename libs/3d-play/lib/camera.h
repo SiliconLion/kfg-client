@@ -71,7 +71,8 @@ typedef struct {
     f32 pan_speed; //rotating left/right
 } CameraControler ;
 
-void cc_apply_action(CameraControler* cc, CameraAction action);
+//if `fac` is not `NULL`, then it is a coefficent applied to the camera action 
+void cc_apply_action(CameraControler* cc, CameraAction action, f32* factor);
 
 // typedef void CAMERA_INTERFACE_UPDATE_FN( f32 delta_u, f32 delta_v, f32 delta_zoom );
 
