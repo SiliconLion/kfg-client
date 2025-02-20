@@ -54,7 +54,7 @@ GameRecord game_record_new(const char* path) {
 
 void game_record_next_iter(GameRecord* g) {
     if(g->curr_line == NULL) {
-        printf("no further lines in game data\n");
+        // printf("no further lines in game data\n");
         return;
     }
 

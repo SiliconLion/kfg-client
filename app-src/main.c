@@ -93,6 +93,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 }
 
 
+//ToDo: It is possible a lot of this code can be replaced by directly query-ing the state of different keys through glfw.
+//However, my first attempt at that did not work reliably, and I belive key events were getting dropped, even with 
+//sticky keys enabled. Furthermore, Cannot totally rely on this call back by itself either because we dont usually care
+//just if a key signals an event, we care about how long it is down or up in relation to real time.
 void register_key_press(GLFWwindow* window, int key, int scancode, int action, int mods) {
 
     if(key == GLFW_KEY_W && action == GLFW_PRESS){key_states.W = KFG_KEY_DOWN;}
@@ -170,6 +174,7 @@ void main_update_camera(CameraControler* cc, KeyStateTracker* kst, GLFWwindow* w
 
 
     if(camera_mode_is_manual) {
+    //Keyboard controls
         if(kst->W == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_FORWARD);}
         if(kst->A == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_LEFT);}
         if(kst->S == KFG_KEY_DOWN) {cc_apply_action(cc, CA_MOVE_BACKWARD);}
@@ -185,6 +190,51 @@ void main_update_camera(CameraControler* cc, KeyStateTracker* kst, GLFWwindow* w
 
         if(kst->Z == KFG_KEY_DOWN) {cc_apply_action(cc, CA_ZOOM_IN);}
         if(kst->X == KFG_KEY_DOWN) {cc_apply_action(cc, CA_ZOOM_OUT);}
+
+    //Gamepad controls
+        //this checks that `GLF_JOYSTICK_1` is present and is a game pad and gets its state. I guess there could be a problem if a different
+        //joystick were connected that was not a gamepad but thats a problem for another time for hardware i dont have.
+
+        GLFWgamepadstate state;
+        if (glfwGetGamepadState(GLFW_JOYSTICK_1, &state)) {
+            // if (state.buttons[GLFW_GAMEPAD_BUTTON_A])
+            // {
+            //     input_jump();
+            // }
+        
+            // input_speed(state.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER]);
+
+            float move_left_right = state.axes[GLFW_GAMEPAD_AXIS_LEFT_X];
+            if(move_left_right < -.1) {cc_apply_action(cc, CA_MOVE_LEFT);} else 
+            if(move_left_right > .1) {cc_apply_action(cc, CA_MOVE_RIGHT);}
+
+            float move_forward_back = state.axes[GLFW_GAMEPAD_AXIS_LEFT_Y];
+            if(move_forward_back < -.1) {cc_apply_action(cc, CA_MOVE_FORWARD);} else 
+            if(move_forward_back > .1) {cc_apply_action(cc, CA_MOVE_BACKWARD);}
+
+            float pan_left_right = state.axes[GLFW_GAMEPAD_AXIS_RIGHT_X];
+            if(pan_left_right < -.1) {cc_apply_action(cc, CA_PAN_LEFT);} else 
+            if(pan_left_right > .1) {cc_apply_action(cc, CA_PAN_RIGHT);}
+
+            float tilt_up_down = state.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y];
+            if(tilt_up_down < -.1) {cc_apply_action(cc, CA_TILT_UP);} else 
+            if(tilt_up_down > .1) {cc_apply_action(cc, CA_TILT_DOWN);}
+
+            if(state.buttons[GLFW_GAMEPAD_BUTTON_LEFT_BUMPER] && state.buttons[GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER]) {/*do nothing*/} else 
+            if(state.buttons[GLFW_GAMEPAD_BUTTON_LEFT_BUMPER]) {cc_apply_action(cc, CA_SINK);} else 
+            if(state.buttons[GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER]) {cc_apply_action(cc, CA_FLOAT);}
+
+            if(state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP] && state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_DOWN]) {/*do nothing*/} else 
+            if(state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP]) {cc_apply_action(cc, CA_ZOOM_IN);} else 
+            if(state.buttons[GLFW_GAMEPAD_BUTTON_DPAD_DOWN]) {cc_apply_action(cc, CA_ZOOM_OUT);}
+
+            // for(int i = 0; i < GLFW_GAMEPAD_BUTTON_LAST; i++) {
+            //     if(state.buttons[i]) {printf("Gamepad button pressed: %u\n", i);}
+            // }
+            
+        }
+
+
     } else {
         cc_apply_action(cc, CA_CIRCLE_TARGET_RIGHT);
     }
@@ -240,6 +290,7 @@ int main(int argc, const char* argv[]) {
     glfwSwapInterval(1);
 
 
+ 
 
     
 
