@@ -52,6 +52,16 @@ FullGeometry full_geom_new(
     return g;
 }
 
+FullGeometry full_geom_empty() {
+    dynarr verts = dynarr_new(sizeof(ThreeNormPoint), 0);
+    dynarr indices = dynarr_new(sizeof(ThreeNormPoint), 0);
+
+    return full_geom_new(
+        ThreeNormPointBlueprint, sizeof(ThreeNormPoint),
+        verts, indices, GL_TRIANGLES, GL_STATIC_DRAW
+    );
+}
+
 void full_geom_bind(FullGeometry * g) {
     glBindVertexArray(g->VAO);
     glBindBuffer(GL_ARRAY_BUFFER, g->VBO);
@@ -86,6 +96,23 @@ void full_geom_replace_verts_and_indices(FullGeometry* g, dynarr new_verts, dyna
     len = g->indices.len;
     stride = sizeof(INDEX_TYPE);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, len * stride, g->indices.data, g->usage);
+
+    full_geom_unbind();
+}
+
+
+void full_geom_normalize_verts_to(FullGeometry* g, float diameter) {
+    //TODO: This is a big assumption! that the position is the first field of the vertex. Really
+    //we need a `VERTEX_BLUEPRINT` type solution for finding the position. But for now, we assume 
+    //that `offsetof(VertexType) == 0`.
+    normalize_3d_vertices_to_cube(&g->vertices, 0, diameter);
+
+//update the gpu with our new vertices
+    full_geom_bind(g);
+
+    size_t len = g->vertices.len;
+    size_t stride = g->vertex_stride;
+    glBufferData(GL_ARRAY_BUFFER, len * stride, g->vertices.data, g->usage);
 
     full_geom_unbind();
 }

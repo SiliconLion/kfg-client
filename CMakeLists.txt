@@ -11,4 +11,5 @@ find_package(OpenGL REQUIRED)
 
 add_subdirectory(libs)
 add_subdirectory(app-src)
+add_subdirectory(tests)
 

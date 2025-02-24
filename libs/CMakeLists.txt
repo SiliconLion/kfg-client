@@ -1,6 +1,7 @@
 add_subdirectory(3d-play)
 add_subdirectory(stb)
 add_subdirectory(glfw)
+add_subdirectory(SDL)
 add_subdirectory(linmath)
 add_subdirectory(cglm)
 add_subdirectory(assimp)

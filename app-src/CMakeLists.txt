@@ -7,16 +7,17 @@ set(CMAKE_C_STANDARD 11)
 
 
 #This is the actual end product program
-add_executable(Client main.c board.c scene.c camera.c model.c helpers.c mesh-tools.c  dreadful-hacks.c dreadful-hacks.c)
+add_executable(Client main.c board.c record.c)
 
 target_link_libraries(Client glfw)
 target_link_libraries(Client OpenGL::GL)
 target_link_libraries(Client cglm_headers)
 target_link_libraries(Client assimp)
 target_link_libraries(Client glad)
-target_link_libraries(Client threeDplay stb)
+target_link_libraries(Client stb)
+target_link_libraries(Client SDL3::SDL3)
 
-
+target_link_libraries(Client threeDplay)
 
 #add_subdirectory(external/cglm/ EXCLUDE_FROM_ALL)
 
