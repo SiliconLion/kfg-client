@@ -17,7 +17,7 @@ typedef struct {
     size_t capacity;
 } dynarr;
 
-const dynarr DYNARR_ZERO;
+extern const dynarr DYNARR_ZERO;
 
 bool dynarr_is_zero(dynarr * d);
 

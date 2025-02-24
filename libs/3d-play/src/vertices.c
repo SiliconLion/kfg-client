@@ -1,7 +1,6 @@
 #include "vertices.h"
 #include "platform.h"
 
-INCLUDE_OPENGL
 
 #include <stddef.h>
 

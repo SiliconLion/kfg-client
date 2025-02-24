@@ -1,7 +1,6 @@
 #pragma once
 #include "platform.h"
 
-INCLUDE_OPENGL
 
 void print_gl_error(int line, char* file);
 

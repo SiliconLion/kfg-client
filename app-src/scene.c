@@ -10,7 +10,6 @@
 
 #include "platform.h"
 
-INCLUDE_OPENGL
 
 
 

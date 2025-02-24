@@ -1,10 +1,12 @@
 #define GL_SILENCE_DEPRECATION
 
+//this basically includes opengl
 #include "platform.h"
 
-# INCLUDE_OPENGL
 
 #include "omni-include.h"
+
+#include <glfw/glfw3.h>
 
 #include <stdbool.h>
 #include <string.h>
@@ -214,6 +216,9 @@ int main() {
 
     counter_global = 0;
 
+
+
+
     //Just plain GLFW window setup and opengl context creation.
     if(!glfwInit()) {
         return 2;
@@ -231,6 +236,13 @@ int main() {
         return 2;
     }
     glfwMakeContextCurrent(window);
+
+#ifndef __APPLE__ // the apple platform doesnt use glad.
+    //Note that this is AFTER `glfwMakeContextCurrent(window);` but BEFORE any gl functions
+    if (!gladLoadGL() ) {
+        printf("Failed to initialize glad");
+    }
+#endif
 
     glfwGetFramebufferSize(window, &windowWidth_global, &windowHeight_global);
     glViewport(0, 0, windowWidth_global, windowHeight_global);

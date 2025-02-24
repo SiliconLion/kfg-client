@@ -1,8 +1,6 @@
 #pragma once
 #include "platform.h"
 
-INCLUDE_OPENGL
-
 #include <stdlib.h>
 #include <stdbool.h>
 

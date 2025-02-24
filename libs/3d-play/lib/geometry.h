@@ -1,7 +1,6 @@
 #pragma once
 #include "platform.h"
 
-INCLUDE_OPENGL
 
 #include <stdlib.h>
 #include "stlreader.h"
@@ -65,7 +64,7 @@ void full_geom_delete(FullGeometry * g);
 //ToDo: Deprecating everything below this in favor of FullGeometry
 
 //each vertex consists of 6 floats. The first 3 for position, then next 3 for normal
-const int VERTEX_SIZE;
+extern const int VERTEX_SIZE;
 
 typedef struct {
     VERTEX_BLUEPRINT * vert_blueprint;

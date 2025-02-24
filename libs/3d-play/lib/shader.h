@@ -1,7 +1,6 @@
 #pragma once
 #include "platform.h"
 
-INCLUDE_OPENGL
 
 
 typedef struct {

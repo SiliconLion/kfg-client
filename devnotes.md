@@ -16,3 +16,5 @@ updated version wont get copied unless you do.
 TODO: make it so CMake always checks for changes in the assets folder
 
 12/28/24 - David S- working on getting this to build on windows. ASSIMP has an error when building with mingw. The suggested fix was to add a line `set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "[Assimp] Treat all warnings as errors.")` in the assimp cmake file. I added it to line 43. Hasnt done the trick yet but leaving it for the moment cuz I gotta go home. 
+
+2/24/25 - David S- On a new windows laptop. Built with CLion which bundles mingw. We are now building glfw from source but thats for the best honestly.

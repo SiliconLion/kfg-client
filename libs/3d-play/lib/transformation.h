@@ -1,7 +1,6 @@
 #pragma once
 #include "platform.h"
 
-INCLUDE_OPENGL
 
 #include <math.h>
 #include "matrix.h"
