@@ -176,13 +176,13 @@ bool import_scene(Scene* scene_out, const char* pFile, bool permissive) {
         return false;
     }
 
-    printf("Scene has %u meshes.\n", scene->mNumMeshes);
-    printf("Scene has %u materials.\n", scene->mNumMaterials);
-    printf("Scene has %u textures.\n", scene->mNumTextures);
-    printf("Scene has %u cameras.\n", scene->mNumCameras);
-    printf("Scene has %u lights.\n", scene->mNumLights);
-    printf("Scene has %u skeletons.\n", scene->mNumSkeletons);
-    printf("Scene has %u animations.\n", scene->mNumAnimations);
+//    printf("Scene has %u meshes.\n", scene->mNumMeshes);
+//    printf("Scene has %u materials.\n", scene->mNumMaterials);
+//    printf("Scene has %u textures.\n", scene->mNumTextures);
+//    printf("Scene has %u cameras.\n", scene->mNumCameras);
+//    printf("Scene has %u lights.\n", scene->mNumLights);
+//    printf("Scene has %u skeletons.\n", scene->mNumSkeletons);
+//    printf("Scene has %u animations.\n", scene->mNumAnimations);
 
     // Now we can access the file's contents
     struct aiNode* root_node = scene->mRootNode;
@@ -240,16 +240,16 @@ bool import_scene(Scene* scene_out, const char* pFile, bool permissive) {
             printf("here\n");
         }
 
-        { //just debug printing stuff. good info. 
-            printf("Material with index %u has the following textures:\n", i);
-
-            // //looping through every variant in aiTextureType
-            for(u32 j = 0; j < AI_TEXTURE_TYPE_MAX; j++) {
-                u32 tex_count = aiGetMaterialTextureCount(material, j);
-                const char* tex_name = aiTextureTypeToString(j);
-                printf("    %u %s textures.\n", tex_count, tex_name);
-            }
-        }
+//        { //just debug printing stuff. good info.
+//            printf("Material with index %u has the following textures:\n", i);
+//
+//            // //looping through every variant in aiTextureType
+//            for(u32 j = 0; j < AI_TEXTURE_TYPE_MAX; j++) {
+//                u32 tex_count = aiGetMaterialTextureCount(material, j);
+//                const char* tex_name = aiTextureTypeToString(j);
+//                printf("    %u %s textures.\n", tex_count, tex_name);
+//            }
+//        }
 
         Texture diffuse;
         Texture normals; 

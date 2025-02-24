@@ -29,7 +29,7 @@ void main() {
 
     vec3 result = (ambient + diffuse) * objectColor;
     FragColor = vec4(result, 1.0);
-
+//    FragColor = vec4(vec3(gl_position.r), 1.0);
 
 
     // FragColor = vec4(texture(DIFFUSE, TexCoord).rgb, 1.0);
