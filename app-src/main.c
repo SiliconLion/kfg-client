@@ -76,7 +76,7 @@ u32 counter_global;
 Camera camera;
 KeyStateTracker key_states;
 bool camera_mode_is_manual = false;
-bool showing_depth = false;
+bool lightmode = false;
 
 u32 const target_fps = 60;
 u32 const target_frame_ms = 1000.f / (float) target_fps;
@@ -96,6 +96,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 
     camera.aspect = window_ratio_global;
     camera_update(&camera);
+
+    printf("missing, must remake framebuffers on resize event.\n");
 }
 
 
@@ -169,7 +171,7 @@ void register_key_press(GLFWwindow* window, int key, int scancode, int action, i
     if(key == GLFW_KEY_L && action == GLFW_PRESS){key_states.L = KFG_KEY_DOWN;}
     if(key == GLFW_KEY_L && action == GLFW_RELEASE){
         key_states.L = KFG_KEY_UP;
-        showing_depth = !showing_depth;
+        lightmode = !lightmode;
     }
     if(key == GLFW_KEY_M && action == GLFW_REPEAT){ /*no op*/}
 
@@ -266,9 +268,6 @@ int main(int argc, const char* argv[]) {
         printf("oh geez. sdl couldn't initialize.");
     }
 
-    f32 BOARD_WIDTH = 8.0;
-    f32 BOARD_HEIGHT = 2.0;
-
     mat4 IDENTITY;
     glm_mat4_identity(IDENTITY);
 
@@ -332,7 +331,7 @@ int main(int argc, const char* argv[]) {
 
 
 
-
+// This is the stuff for directly rendering the model.
 
     Shader* model_shader = shad_new("shaders/model/model-simple.vert", "shaders/model/model-simple.frag");
     GLERROR();
@@ -347,15 +346,46 @@ int main(int argc, const char* argv[]) {
     glUniform1i(model_diffuse_loc, 0);
     glUniform1i(model_normals_loc, 1);
     shad_unbind();
-
-    
     GLERROR();
 
+    Framebuffer model_fbr;
+    framebuffer_new(&model_fbr, GL_RGBA, windowWidth_global, windowHeight_global);
+    GLERROR();
+
+
+    glm_vec3_copy((vec3){2, 3, 2}, camera.pos);
+    glm_vec3_copy((vec3){0, 0, 0}, camera.target);
+    camera.y_fov = 1.0f;
+    camera.near_plane = 1.00000f;
+    camera.far_plane = 300.000000f;
+    camera.aspect = window_ratio_global;
+
+    camera_update(&camera);
+
+    CameraControler cam_control = {
+            .c = &camera,
+            .forward_speed = .4,
+            .backward_speed = .4,
+            .straif_speed = .4,
+            .float_speed = .4,
+            .tilt_speed = M_PI / 100.0,
+            .pan_speed = M_PI / 100.0,
+            .zoom_speed = 0.02
+    };
+
+
+
+
+
+//This is the stuff for the shadow pass
 //    Shader* shadow_shader = shad_new("shaders/simple-depth/simple-depth.vert", "shaders/simple-depth/simple-depth.frag");
     Shader* shadow_shader = shad_new("shaders/model/model-simple.vert", "shaders/model/model-simple.frag");
     GLERROR();
-    i32 shadow_LSM_loc = glGetUniformLocation(model_shader->program, "lightSpaceMatrix");
-    i32 shadow_model_loc = glGetUniformLocation(model_shader->program, "model");
+//    i32 shadow_LSM_loc = glGetUniformLocation(model_shader->program, "lightSpaceMatrix");
+//    i32 shadow_model_loc = glGetUniformLocation(model_shader->program, "model");
+    i32 shadow_view_loc = glGetUniformLocation(model_shader->program, "view");
+    i32 shadow_perspective_loc = glGetUniformLocation(model_shader->program, "perspective");
+
     GLERROR();
 
     i32 SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
@@ -363,15 +393,35 @@ int main(int argc, const char* argv[]) {
 //    framebuffer_new_depth(&shadow_fbr, SHADOW_WIDTH, SHADOW_HEIGHT);
     framebuffer_new(&shadow_fbr, GL_RGBA, windowWidth_global, windowHeight_global);
 
+    Camera lightsource;
+    //NOTE: lightsource pointed straight down breaks some math in the look-at matrix unfortunately.
+    glm_vec3_copy((vec3){-1,4,-1}, lightsource.pos);
+    glm_vec3_copy((vec3){0, 0, 0}, lightsource.target);
+    lightsource.y_fov = 1.0f;
+    lightsource.near_plane = 1.f;
+    lightsource.far_plane =  300.f;
+    lightsource.aspect = window_ratio_global;
+    camera_update(&lightsource);
 
-    // Shader* screen_shader = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/just-depth.frag");
-    Shader* screen_shader = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/no-effect.frag");
+
+
+
+
+
+
+//This is the stuff for rendering the contents of a framebuffer or texture to the screen
+    //No framebuffer because the intention is to draw to the screen, aka the default framebuffer.
+    Shader* screen_shader_color = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/no-effect.frag");
+    Shader* screen_shader_depth = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/just-depth.frag");
     // Shader* screen_shader = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/sharpen.frag");
     GLERROR();
     FullGeometry screen_rect = prim_new_tex_rect(GL_STATIC_DRAW);
     GLERROR();
+//end screen setup stuff
 
 
+
+//Asset/scene/models setup and associated variables
 
     const char* scene_path;
     if(argc < 2) {
@@ -380,74 +430,27 @@ int main(int argc, const char* argv[]) {
         scene_path = argv[1];
     }
 
-    // Scene setting;
-    // if(!import_scene(&setting, scene_path, true)){
-    //     printf("I weep, for dispite promises made, we could not import a gltf file\n");
-    // } else {
-    //     printf("HUZZAH! Assimp imported a complex gltf file\n");
-    // }
+//getting the setup right first without a complex scene
+     Scene setting;
+//     if(!import_scene(&setting, scene_path, true)){
+//         printf("I weep, for dispite promises made, we could not import a gltf file\n");
+//     } else {
+//         printf("HUZZAH! Assimp imported a complex gltf file\n");
+//     }
 
     GLERROR();
 
+
     const char* record_path = "assets/game-records/game_export";
     GameRecord record = game_record_new(record_path);
-    // while(record.curr_line != NULL) {
-    //     game_record_next_iter(&record);
-    // }
-    // printf("All lines in game record parsed");
-    
-
     KFG_Match match = match_new();
-    // game_record_apply_to_board(&record, &match);
     
     
 
 
-    glDisable(GL_CULL_FACE);
-
-
-
-    // glm_vec3_copy((vec3){150, 165, 150}, camera.pos);
-    // glm_vec3_copy((vec3){0, 0, 0}, camera.target);
-    // camera.y_fov = 0.3;
-    // camera.near_plane = 1.00000;
-    // camera.far_plane = 3000.000000;
-    // camera.aspect = window_ratio_global;
-
-
-    glm_vec3_copy((vec3){2, 3, 2}, camera.pos);
-    glm_vec3_copy((vec3){0, 0, 0}, camera.target);
-    camera.y_fov = 1.0;
-    camera.near_plane = 1.00000;
-    camera.far_plane = 300.000000;
-    camera.aspect = window_ratio_global;
-
-    camera_update(&camera);
-
-    CameraControler cam_control = {
-        .c = &camera,
-        .forward_speed = .4,
-        .backward_speed = .4,
-        .straif_speed = .4,
-        .float_speed = .4,
-        .tilt_speed = M_PI / 1000.0,
-        .pan_speed = M_PI / 1000.0,
-        .zoom_speed = 0.02
-    };
-
-
-    // Camera lightsource;
-    // glm_vec3_copy((vec3){1156, 4228, 245}, lightsource.pos);
-    // glm_vec3_copy((vec3){0, 0, 0}, lightsource.target);
-    // lightsource.y_fov = 1.0;
-    // lightsource.aspect = 1.0;
-    // lightsource.near_plane = 1.f;
-    // lightsource.far_plane =   10000.f;
-
+//Game loop variable and metrics
 
     u64 frames = 0;
-
-    
     u32 frame_start = 0, currentTime;
     
     u32 last_board_update_time = 0;
@@ -456,8 +459,12 @@ int main(int argc, const char* argv[]) {
     u32 const framespan = 100;
     u32 frame_lengths[100] = {0};
 
-//    glEnable(GL_DEPTH_TEST);
-    glDisable(GL_DEPTH_TEST);
+
+//Opengl settings
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+
+
     //the render loop
     while (!glfwWindowShouldClose(window) && key_states.ESC != KFG_KEY_DOWN) {
 
@@ -492,36 +499,51 @@ int main(int argc, const char* argv[]) {
 
 
 
+    //begin creating the shadow map by drawing from the lights POV.
 
-
-    //begin drawing models
-        {
-            framebuffer_bind(&shadow_fbr);
-
+        framebuffer_bind(&shadow_fbr);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_DEPTH_BUFFER_BIT);
-            glClearColor(0.f,0.f,0.f,0.f);
+            glClearColor(0.f,0.3f,0.2f,0.f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-//            shad_bind(shadow_shader);
+            shad_bind(shadow_shader);
+
+            glUniformMatrix4fv(
+                    shadow_view_loc,
+                    1,
+                    GL_FALSE,// column major order
+                    (const float *) lightsource.view
+            );
+
+            glUniformMatrix4fv(
+                    shadow_perspective_loc,
+                    1,
+                    GL_FALSE,// column major order
+                    (const float *) lightsource.perspective
+            );
+
+//            draw_all_model_instances(&scene.model_instances, model_matrix_loc);
+            match_draw(&match, model_matrix_loc);
+            GLERROR();
+        framebuffer_unbind();
+    //end creating the shadow map
+
+    //begin drawing all models from the camera's POV
+        framebuffer_bind(&model_fbr);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            glClearColor(0.2f,0.05f,0.1f,0.f);
+            glClear(GL_COLOR_BUFFER_BIT);
+
             shad_bind(model_shader);
-            //change the viewport to the shadow framebuffer size
-//            glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 
-
-//            //bind the lightsource matrix
-//            glUniformMatrix4fv(
-//                    shadow_LSM_loc,
-//                    1,
-//                    GL_FALSE,
-//                    (const float *)lightsource.view
-//            );
-
+            //load the camera's view and perspective matrices
             glUniformMatrix4fv(
                     model_view_loc,
                     1,
                     GL_FALSE,// column major order
-                    (const float *)camera.view
+                    (const float *) camera.view
             );
 
             glUniformMatrix4fv(
@@ -531,84 +553,49 @@ int main(int argc, const char* argv[]) {
                     (const float *)camera.perspective
             );
 
-            // draw setting from the lightsource POV
-//            draw_all_model_instances(&setting.model_instances, shadow_model_loc);
-            // draw_all_model_instances(&setting.model_instances, model_matrix_loc);
-            match_draw(&match, shadow_model_loc);
+//            draw_all_model_instances(&scene.model_instances, model_matrix_loc);
+            match_draw(&match, model_matrix_loc);
+            GLERROR();
+        framebuffer_unbind();
+    //end drawing models from Camera's POV
 
 
-
-
-
-            if(frames == 100) {
-//                framebuffer_color_save_image(&shadow_fbr, "./shadow-fbr-color.png");
-                framebuffer_depth_save_image(&shadow_fbr, "./shadow-fbr-depth.png", false);
-                framebuffer_depth_save_image(&shadow_fbr, "./shadow-fbr-depth-normalized.png", true);
-                printf("printed framebuffer\n");
-            }
-
-            framebuffer_unbind();
-
+    //draw to the screen
+        framebuffer_unbind(); //binds the default framebuffer, aka the screen. (a little redundant but i like the clarity)
             glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
             glClear(GL_DEPTH_BUFFER_BIT);
             glClearColor(0.f,0.f,0.f,0.f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-        //draw framebuffer to screen
-
-//            glViewport(0, 0, windowWidth_global, windowHeight_global);
-            shad_bind(screen_shader);
             glActiveTexture(GL_TEXTURE0);
 
-            if (showing_depth) {
+            if (lightmode) {
+                shad_bind(screen_shader_depth);
                 glBindTexture(GL_TEXTURE_2D, shadow_fbr.depth_tex_id);
             } else {
-                glBindTexture(GL_TEXTURE_2D, shadow_fbr.color_tex_id);
+                shad_bind(screen_shader_color);
+                glBindTexture(GL_TEXTURE_2D, model_fbr.color_tex_id);
             }
 
-
-
             full_geom_draw(&screen_rect);
+            GLERROR();
+        framebuffer_unbind();//again, redundant, but I like the clarity
 
 
-
-            //return the viewport to the window dimensions.
-//            glViewport(0, 0, windowWidth_global, windowHeight_global);
-//            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//            framebuffer_unbind();
+    //present the render to the window
+        glfwSwapBuffers(window);
 
 
-//    //draw the actual scene, now with the shadow information.
-//            shad_bind(model_shader);
-//            // GLERROR();
-//
-//            //bind view matrix
-//            glUniformMatrix4fv(
-//                    model_view_loc,
-//                    1,
-//                    GL_FALSE,// column major order
-//                    (const float *)camera.view
-//            );
-//            // GLERROR();
-//            //bind perspective matrix
-//            glUniformMatrix4fv(
-//                    model_perspective_loc,
-//                    1,
-//                    GL_FALSE,// column major order
-//                    (const float *)camera.perspective
-//            );
-//            // GLERROR();
-//
-//
-//            draw_all_model_instances(&setting.model_instances, model_matrix_loc);
-//            match_draw(&match, model_matrix_loc);
+    //misc
+        if(frames == 100) {
+            framebuffer_color_save_image(&shadow_fbr, "shadow-fbr-color.png");
+            framebuffer_depth_save_image(&shadow_fbr, "shadow-fbr-depth.png", false);
+            framebuffer_depth_save_image(&shadow_fbr, "shadow-fbr-depth-normalized.png", true);
+            printf("shadow_fbr saved to images");
         }
 
-        //present the render to the window 
-        glfwSwapBuffers(window);
-        
 
-        // GLERROR();
+    //calculate frame anylitics and framerate adjustment
         frames += 1;
 
         currentTime = SDL_GetTicks();
@@ -623,7 +610,8 @@ int main(int argc, const char* argv[]) {
 
     }
 
-    //TODO: Delete models
+
+    //TODO: memory management lol
 
     glfwDestroyWindow(window);
     glfwTerminate();

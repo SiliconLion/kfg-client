@@ -19,3 +19,7 @@ TODO: make it so CMake always checks for changes in the assets folder
 2/19/25 - David S- I had to update glfw via brew randomly because cmake seemed to be having trouble finding it suddenly? This could get tedious across different machines. May want to look into building from source.
 2/19/25 - David S- Joystick/Gamepad seems to not recognize certian buttons. For now I am just going to work around this. I started getting the joystick example from GLFW running, but it needs several dependencies, and it may be best to (as in my last note) just build from source. But not a problem for the moment. Will just work around it. 
 2/24/25 - David S- On a new windows laptop. Built with CLion which bundles mingw. We are now building glfw from source but thats for the best honestly.
+2/25/25 - David S- Should probably note that atm, `exit(0)` is the official memory cleanup strategy. I know that's 
+not great, but the structure of this program and what owns what changes so fast (and OpenGL is not a very RAII or OO 
+friendly API), that just accepting that for now. Esp because there is a good chance that if this keeps developing to 
+the point where more complex features get added, we will want/need to move to an ECS anyways.
