@@ -1,4 +1,0 @@
-#This is the actual end product program
-# add_executable(Joystick joystick.c)
-
-# target_link_libraries(Joystick glfw)

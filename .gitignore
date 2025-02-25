@@ -1,6 +1,9 @@
 build/
 cmake-build-debug/
 cmake-build-release/
+mingw-build/
 .idea/
 .vscode/
 dump/
+.DS_Store
+.vs

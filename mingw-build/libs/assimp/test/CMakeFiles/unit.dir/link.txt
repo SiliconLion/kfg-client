@@ -1,3 +1,0 @@
-C:/mingw64/bin/ccache.exe C:\mingw64\bin\cmake.exe -E rm -f CMakeFiles\unit.dir/objects.a
-C:/mingw64/bin/ccache.exe C:\mingw64\bin\ar.exe qc CMakeFiles\unit.dir/objects.a @CMakeFiles\unit.dir\objects1.rsp
-C:/mingw64/bin/ccache.exe C:\mingw64\bin\c++.exe -fvisibility=hidden -fno-strict-aliasing -Wno-dangling-reference -Wall -Wno-long-long -Wa,-mbig-obj -O3 -std=gnu++17  -O2 -g -DNDEBUG -Wl,--whole-archive CMakeFiles\unit.dir/objects.a -Wl,--no-whole-archive -o ..\bin\unit.exe -Wl,--out-implib,..\lib\libunit.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\unit.dir\linkLibs.rsp

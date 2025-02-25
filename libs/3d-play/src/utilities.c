@@ -1,22 +1,23 @@
 #include "utilities.h"
 
 #include <string.h>
-#include <stddef.h> 
-#ifdef _WIN32 
-    #include <direct.h>
-    #define getcwd _getcwd
-#endif
+#include <stddef.h>
+
+//#ifdef _WIN32
+//    #include <direct.h>
+//    #define getcwd _getcwd
+//#endif
 
 //path is a null terminated string of the file path
 //sets length to be length of the file in bytes. Pass in NULL to ignore this 
 char * readFile(const char* path, int* length) {
     FILE * file = fopen(path, "r");
     if (!file) {
-        char * curdirectory = calloc(2000, sizeof(char));
-        getcwd(curdirectory, 2000);
-        printf("Unable to open file \"%s\" from current directory \"%s\"\n", path, curdirectory);
+        printf("Unable to open file \"%s\"\n", path);
         length = NULL;
         return NULL;
+
+
     }
     fseek(file, 0, SEEK_END);
     int size = ftell(file);
@@ -45,9 +46,7 @@ int8_t * readBytes(const char* path, int* count) {
     }
     FILE * file = fopen(path, "rb");
     if (!file) {
-        char * curdirectory = calloc(2000, sizeof(char));
-        getcwd(curdirectory, 2000);
-        printf("Unable to open file \"%s\" from current directory \"%s\"\n", path, curdirectory);
+        printf("Unable to open file \"%s\"\n", path);
         count = NULL;
         return NULL;
     }
@@ -75,9 +74,7 @@ bool writeBytes(const char* path, int8_t * bytes, int count) {
     }
     FILE * file = fopen(path, "wb+");
     if (!file) {
-        char * curdirectory = calloc(2000, sizeof(char));
-        getcwd(curdirectory, 2000);
-        printf("Unable to open file \"%s\" from current directory \"%s\"\n", path, curdirectory);
+        printf("Unable to open file \"%s\" \n", path);
         return false;
     }
 
