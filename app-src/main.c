@@ -34,7 +34,7 @@ typedef enum {
 } KeyStates;
 
 typedef struct  {
-    int W, A, S, D, SPACE, SHIFT, I, J, U, V, Z, X, M, ESC, ENTER;
+    int W, A, S, D, SPACE, SHIFT, I, J, U, V, Z, X, L, M, ESC, ENTER;
 } KeyStateTracker;
 
 void print_kst(KeyStateTracker* kst) {
@@ -52,6 +52,7 @@ void print_kst(KeyStateTracker* kst) {
         "       V: %u,\n"
         "       Z: %u,\n"
         "       X: %u,\n"
+        "       L: %u,\n"
         "       M: %u,\n"
         "       ESC: %u,\n"
         "       ENTER: %u,\n"
@@ -60,7 +61,7 @@ void print_kst(KeyStateTracker* kst) {
         kst->SPACE, kst->SHIFT,
         kst->I, kst->J, kst->U, kst->V,
         kst->Z, kst->X,
-        kst->M,
+        kst->L, kst->M,
         kst->ESC, kst->ENTER
     );
 }
@@ -75,6 +76,7 @@ u32 counter_global;
 Camera camera;
 KeyStateTracker key_states;
 bool camera_mode_is_manual = false;
+bool showing_depth = false;
 
 u32 const target_fps = 60;
 u32 const target_frame_ms = 1000.f / (float) target_fps;
@@ -162,6 +164,13 @@ void register_key_press(GLFWwindow* window, int key, int scancode, int action, i
         key_states.M = KFG_KEY_UP;
         camera_mode_is_manual = !camera_mode_is_manual;
         }
+    if(key == GLFW_KEY_M && action == GLFW_REPEAT){ /*no op*/}
+
+    if(key == GLFW_KEY_L && action == GLFW_PRESS){key_states.L = KFG_KEY_DOWN;}
+    if(key == GLFW_KEY_L && action == GLFW_RELEASE){
+        key_states.L = KFG_KEY_UP;
+        showing_depth = !showing_depth;
+    }
     if(key == GLFW_KEY_M && action == GLFW_REPEAT){ /*no op*/}
 
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){key_states.ESC = KFG_KEY_DOWN;}
@@ -355,12 +364,13 @@ int main(int argc, const char* argv[]) {
     framebuffer_new(&shadow_fbr, GL_RGBA, windowWidth_global, windowHeight_global);
 
 
-//    Shader* screen_shader = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/just-depth.frag");
-//    Shader* screen_shader = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/no-effect.frag");
-    Shader* screen_shader = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/sharpen.frag");
+    // Shader* screen_shader = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/just-depth.frag");
+    Shader* screen_shader = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/no-effect.frag");
+    // Shader* screen_shader = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/sharpen.frag");
     GLERROR();
     FullGeometry screen_rect = prim_new_tex_rect(GL_STATIC_DRAW);
     GLERROR();
+
 
 
     const char* scene_path;
@@ -370,12 +380,12 @@ int main(int argc, const char* argv[]) {
         scene_path = argv[1];
     }
 
-    Scene setting;
-    if(!import_scene(&setting, scene_path, true)){
-        printf("I weep, for dispite promises made, we could not import a gltf file\n");
-    } else {
-        printf("HUZZAH! Assimp imported a complex gltf file\n");
-    }
+    // Scene setting;
+    // if(!import_scene(&setting, scene_path, true)){
+    //     printf("I weep, for dispite promises made, we could not import a gltf file\n");
+    // } else {
+    //     printf("HUZZAH! Assimp imported a complex gltf file\n");
+    // }
 
     GLERROR();
 
@@ -397,43 +407,42 @@ int main(int argc, const char* argv[]) {
 
 
 
-    glm_vec3_copy((vec3){150, 165, 150}, camera.pos);
+    // glm_vec3_copy((vec3){150, 165, 150}, camera.pos);
+    // glm_vec3_copy((vec3){0, 0, 0}, camera.target);
+    // camera.y_fov = 0.3;
+    // camera.near_plane = 1.00000;
+    // camera.far_plane = 3000.000000;
+    // camera.aspect = window_ratio_global;
+
+
+    glm_vec3_copy((vec3){2, 3, 2}, camera.pos);
     glm_vec3_copy((vec3){0, 0, 0}, camera.target);
-    camera.y_fov = 0.3;
-    camera.near_plane = 1.00000; 
-    camera.far_plane = 3000.000000;
+    camera.y_fov = 1.0;
+    camera.near_plane = 1.00000;
+    camera.far_plane = 300.000000;
     camera.aspect = window_ratio_global;
 
     camera_update(&camera);
 
     CameraControler cam_control = {
         .c = &camera,
-        .forward_speed = 4, 
-        .backward_speed = 4,
-        .straif_speed = 4,
-        .float_speed = 4,
-        .tilt_speed = M_PI / 200.0,
-        .pan_speed = M_PI / 200.0,
+        .forward_speed = .4,
+        .backward_speed = .4,
+        .straif_speed = .4,
+        .float_speed = .4,
+        .tilt_speed = M_PI / 1000.0,
+        .pan_speed = M_PI / 1000.0,
         .zoom_speed = 0.02
     };
 
 
-    Camera lightsource;
-    glm_vec3_copy((vec3){1156, 4228, 245}, lightsource.pos);
-    glm_vec3_copy((vec3){0, 0, 0}, lightsource.target);
-    lightsource.y_fov = 1.0;
-    lightsource.aspect = 1.0;
-    lightsource.near_plane = 1.f;
-    lightsource.far_plane =   10000.f;
-//
-//    glm_vec3_copy((vec3){150, 165, 150}, lightsource.pos);
-//    glm_vec3_copy((vec3){0, 0, 0}, lightsource.target);
-//    lightsource.y_fov = 0.3;
-//    lightsource.near_plane = 1.00000;
-//    lightsource.far_plane = 3000.000000;
-//    lightsource.aspect = window_ratio_global;
-//
-//    camera_update(&lightsource);
+    // Camera lightsource;
+    // glm_vec3_copy((vec3){1156, 4228, 245}, lightsource.pos);
+    // glm_vec3_copy((vec3){0, 0, 0}, lightsource.target);
+    // lightsource.y_fov = 1.0;
+    // lightsource.aspect = 1.0;
+    // lightsource.near_plane = 1.f;
+    // lightsource.far_plane =   10000.f;
 
 
     u64 frames = 0;
@@ -524,8 +533,12 @@ int main(int argc, const char* argv[]) {
 
             // draw setting from the lightsource POV
 //            draw_all_model_instances(&setting.model_instances, shadow_model_loc);
-            draw_all_model_instances(&setting.model_instances, model_matrix_loc);
+            // draw_all_model_instances(&setting.model_instances, model_matrix_loc);
             match_draw(&match, shadow_model_loc);
+
+
+
+
 
             if(frames == 100) {
 //                framebuffer_color_save_image(&shadow_fbr, "./shadow-fbr-color.png");
@@ -546,8 +559,15 @@ int main(int argc, const char* argv[]) {
 //            glViewport(0, 0, windowWidth_global, windowHeight_global);
             shad_bind(screen_shader);
             glActiveTexture(GL_TEXTURE0);
-//            glBindTexture(GL_TEXTURE_2D, shadow_fbr.depth_tex_id);
-            glBindTexture(GL_TEXTURE_2D, shadow_fbr.color_tex_id);
+
+            if (showing_depth) {
+                glBindTexture(GL_TEXTURE_2D, shadow_fbr.depth_tex_id);
+            } else {
+                glBindTexture(GL_TEXTURE_2D, shadow_fbr.color_tex_id);
+            }
+
+
+
             full_geom_draw(&screen_rect);
 
 

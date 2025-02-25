@@ -18,8 +18,8 @@
 // #define BOARD_ROW_COUNT 5
 // #define BOARD_COL_COUNT 5
 
-#define BOARD_SCALE 50.0f
-
+// #define BOARD_SCALE 50.0f
+#define BOARD_SCALE 1.0f
 enum StoneColor {WHITE_STONE, BLACK_STONE};
 
 typedef struct {
