@@ -14,10 +14,10 @@ void main() {
     vec3 ambient = ambientStrength * ambientLightColor;
 
     vec3 objectColor = texture(DIFFUSE, TexCoord).rgb;
-    // vec3 objectColor = vec3(TexCoord, 1.0);
+    // ve c3 objectColor = vec3(TexCoord, 1.0);
     // vec3 objectColor = vec3(1.0, 1.0, 1.0);
 
-    vec3 texture_normals = texture(DIFFUSE, TexCoord).rgb;
+    vec3 texture_normals = texture(NORMALS, TexCoord).rgb;
     vec3 compound_norm = norm + texture_normals;
 
     // vec3 lightDir = normalize(vec3(1, 4, 1));
@@ -29,7 +29,7 @@ void main() {
 
     vec3 result = (ambient + diffuse) * objectColor;
     FragColor = vec4(result, 1.0);
-//    FragColor = vec4(vec3(gl_position.r), 1.0);
+    //    FragColor = vec4(vec3(gl_position.r), 1.0);
 
 
     // FragColor = vec4(texture(DIFFUSE, TexCoord).rgb, 1.0);

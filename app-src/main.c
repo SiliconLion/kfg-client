@@ -6,7 +6,7 @@
 
 #include "omni-include.h"
 
-#include <glfw/glfw3.h>
+#include <GLFW/glfw3.h>
 
 #include <stdbool.h>
 #include <string.h>
@@ -331,20 +331,63 @@ int main(int argc, const char* argv[]) {
 
 
 
+
+
+//This is the stuff for the shadow pass
+//    Shader* shadow_shader = shad_new("shaders/depth/simple-depth.vert", "shaders/depth/simple-depth.frag");
+//    Shader* shadow_shader = shad_new("shaders/model/model-simple.vert", "shaders/model/model-simple.frag");
+    Shader* shadow_shader = shad_new("shaders/depth/wip-depth.vert", "shaders/depth/wip-depth.frag");
+    GLERROR();
+//    i32 shadow_LSM_loc = glGetUniformLocation(shadow_shader->program, "lightSpaceMatrix");
+//    i32 shadow_model_loc = glGetUniformLocation(shadow_shader->program, "model");
+    i32 shadow_view_loc = glGetUniformLocation(shadow_shader->program, "view");
+    if(shadow_view_loc < 0) {printf("error getting location of \"view\" from shadow shader\n");}
+    i32 shadow_perspective_loc = glGetUniformLocation(shadow_shader->program, "perspective");
+
+    GLERROR();
+
+    i32 SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    Framebuffer shadow_fbr;
+//    framebuffer_new_depth(&shadow_fbr, SHADOW_WIDTH, SHADOW_HEIGHT);
+    framebuffer_new(&shadow_fbr, GL_RGBA, windowWidth_global, windowHeight_global);
+
+    Camera lightsource;
+    //NOTE: lightsource pointed straight down breaks some math in the look-at matrix unfortunately.
+    glm_vec3_copy((vec3){-.1, 4,-.1}, lightsource.pos);
+    glm_vec3_copy((vec3){0, 0, 0}, lightsource.target);
+    lightsource.y_fov = 1.0f;
+    lightsource.near_plane = 1.f;
+    lightsource.far_plane =  300.f;
+    lightsource.aspect = window_ratio_global;
+    camera_update(&lightsource);
+
+
+
+
 // This is the stuff for directly rendering the model.
 
-    Shader* model_shader = shad_new("shaders/model/model-simple.vert", "shaders/model/model-simple.frag");
+//    Shader* model_shader = shad_new("shaders/model/model-simple.vert", "shaders/model/model-simple.frag");
+    Shader* model_shader = shad_new(
+            "shaders/model/model-with-shadow.vert",
+            "shaders/model/model-with-shadow.frag"
+    );
     GLERROR();
     i32 model_matrix_loc = glGetUniformLocation(model_shader->program, "model");
     i32 model_view_loc = glGetUniformLocation(model_shader->program, "view");
     i32 model_perspective_loc = glGetUniformLocation(model_shader->program, "perspective");
 
+    i32 model_light_view_loc = glGetUniformLocation(model_shader->program, "light_view");
+    i32 model_light_perspective_loc = glGetUniformLocation(model_shader->program, "light_perspective");
+
     i32 model_diffuse_loc = glGetUniformLocation(model_shader->program, "DIFFUSE");
     i32 model_normals_loc = glGetUniformLocation(model_shader->program, "NORMALS");
+    i32 model_shadows_loc = glGetUniformLocation(model_shader->program, "SHADOWS");
+
 
     shad_bind(model_shader);
     glUniform1i(model_diffuse_loc, 0);
     glUniform1i(model_normals_loc, 1);
+    glUniform1i(model_shadows_loc, 2);
     shad_unbind();
     GLERROR();
 
@@ -352,7 +395,7 @@ int main(int argc, const char* argv[]) {
     framebuffer_new(&model_fbr, GL_RGBA, windowWidth_global, windowHeight_global);
     GLERROR();
 
-
+    //the camera for the model shader
     glm_vec3_copy((vec3){2, 3, 2}, camera.pos);
     glm_vec3_copy((vec3){0, 0, 0}, camera.target);
     camera.y_fov = 1.0f;
@@ -372,42 +415,7 @@ int main(int argc, const char* argv[]) {
             .pan_speed = M_PI / 100.0,
             .zoom_speed = 0.02
     };
-
-
-
-
-
-//This is the stuff for the shadow pass
-//    Shader* shadow_shader = shad_new("shaders/simple-depth/simple-depth.vert", "shaders/simple-depth/simple-depth.frag");
-    Shader* shadow_shader = shad_new("shaders/model/model-simple.vert", "shaders/model/model-simple.frag");
-    GLERROR();
-//    i32 shadow_LSM_loc = glGetUniformLocation(model_shader->program, "lightSpaceMatrix");
-//    i32 shadow_model_loc = glGetUniformLocation(model_shader->program, "model");
-    i32 shadow_view_loc = glGetUniformLocation(model_shader->program, "view");
-    i32 shadow_perspective_loc = glGetUniformLocation(model_shader->program, "perspective");
-
-    GLERROR();
-
-    i32 SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
-    Framebuffer shadow_fbr;
-//    framebuffer_new_depth(&shadow_fbr, SHADOW_WIDTH, SHADOW_HEIGHT);
-    framebuffer_new(&shadow_fbr, GL_RGBA, windowWidth_global, windowHeight_global);
-
-    Camera lightsource;
-    //NOTE: lightsource pointed straight down breaks some math in the look-at matrix unfortunately.
-    glm_vec3_copy((vec3){-1,4,-1}, lightsource.pos);
-    glm_vec3_copy((vec3){0, 0, 0}, lightsource.target);
-    lightsource.y_fov = 1.0f;
-    lightsource.near_plane = 1.f;
-    lightsource.far_plane =  300.f;
-    lightsource.aspect = window_ratio_global;
-    camera_update(&lightsource);
-
-
-
-
-
-
+//End Model rendering stuff
 
 //This is the stuff for rendering the contents of a framebuffer or texture to the screen
     //No framebuffer because the intention is to draw to the screen, aka the default framebuffer.
@@ -506,8 +514,10 @@ int main(int argc, const char* argv[]) {
             glClear(GL_DEPTH_BUFFER_BIT);
             glClearColor(0.f,0.3f,0.2f,0.f);
             glClear(GL_COLOR_BUFFER_BIT);
+            GLERROR();
 
             shad_bind(shadow_shader);
+            GLERROR();
 
             glUniformMatrix4fv(
                     shadow_view_loc,
@@ -515,6 +525,7 @@ int main(int argc, const char* argv[]) {
                     GL_FALSE,// column major order
                     (const float *) lightsource.view
             );
+            GLERROR();
 
             glUniformMatrix4fv(
                     shadow_perspective_loc,
@@ -538,7 +549,7 @@ int main(int argc, const char* argv[]) {
 
             shad_bind(model_shader);
 
-            //load the camera's view and perspective matrices
+        //load the camera's view and perspective matrices
             glUniformMatrix4fv(
                     model_view_loc,
                     1,
@@ -552,7 +563,27 @@ int main(int argc, const char* argv[]) {
                     GL_FALSE,// column major order
                     (const float *)camera.perspective
             );
+        //load the lightsource's view and perspective matrices
+            glUniformMatrix4fv(
+                    model_light_view_loc,
+                    1,
+                    GL_FALSE,// column major order
+                    (const float *)lightsource.view
+            );
+            glUniformMatrix4fv(
+                    model_light_perspective_loc,
+                    1,
+                    GL_FALSE,// column major order
+                    (const float *)lightsource.perspective
+            );
+            GLERROR();
 
+//        bind the shadow map
+            glActiveTexture(GL_TEXTURE0 + 2);
+            glBindTexture(GL_TEXTURE_2D, shadow_fbr.depth_tex_id);
+            GLERROR();
+
+            glActiveTexture(GL_TEXTURE0 );
 //            draw_all_model_instances(&scene.model_instances, model_matrix_loc);
             match_draw(&match, model_matrix_loc);
             GLERROR();
@@ -591,7 +622,7 @@ int main(int argc, const char* argv[]) {
             framebuffer_color_save_image(&shadow_fbr, "shadow-fbr-color.png");
             framebuffer_depth_save_image(&shadow_fbr, "shadow-fbr-depth.png", false);
             framebuffer_depth_save_image(&shadow_fbr, "shadow-fbr-depth-normalized.png", true);
-            printf("shadow_fbr saved to images");
+            printf("shadow_fbr saved to images\n");
         }
 
 
