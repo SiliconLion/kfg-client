@@ -281,7 +281,7 @@ int main(int argc, const char* argv[]) {
     //No framebuffer because the intention is to draw to the screen, aka the default framebuffer.
     Shader* screen_shader_no_effect = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/no-effect.frag");
     Shader* screen_shader_blur = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/blur.frag");
-     Shader* screen_shader_sharpen = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/sharpen.frag");
+    Shader* screen_shader_sharpen = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/sharpen.frag");
     GLERROR();
     FullGeometry screen_rect = prim_new_tex_rect(GL_STATIC_DRAW);
     GLERROR();
@@ -306,17 +306,17 @@ int main(int argc, const char* argv[]) {
 
 
 //Opengl settings
-    glDisable(GL_DEPTH_TEST);
+//    glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
 
-    framebuffer_bind(chain.front);
+    framebuffer_bind(&chain.A);
         glClearColor(1.0, 0.0, 0.0, 1.0);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     framebuffer_unbind();
-    framebuffer_bind(chain.back);
+    framebuffer_bind(&chain.B);
         glClearColor(0.0, 1.0, 0.0, 1.0);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     framebuffer_unbind();
 
 
@@ -327,37 +327,64 @@ int main(int argc, const char* argv[]) {
         glfwPollEvents();
 
         framebuffer_bind(chain.front);
-            shad_bind(screen_shader_blur);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, chain.back->color_tex_id);
-
+            shad_bind(screen_shader_no_effect);
             tex_bind(&noise, 0);
             full_geom_draw(&screen_rect);
         framebuffer_unbind();
 
         swpchain_swap(&chain);
 
-        framebuffer_bind(chain.front);
+        for(u32 i = 0; i < 4; i++) {
+            for(u32 j = 0; j < 8; j++) {
+                framebuffer_bind(chain.front);
+                    glClearColor(1.0, 0.0, 0.0, 1.0);
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            shad_bind(screen_shader_blur);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, chain.back->color_tex_id);
+                    shad_bind(screen_shader_blur);
+                    glActiveTexture(GL_TEXTURE0);
+                    glBindTexture(GL_TEXTURE_2D, chain.back->color_tex_id);
+                    full_geom_draw(&screen_rect);
+                framebuffer_unbind();
 
-            full_geom_draw(&screen_rect);
-        framebuffer_unbind();
+                swpchain_swap(&chain);
+            }
+
+            framebuffer_bind(chain.front);
+                glClearColor(1.0, 0.0, 0.0, 1.0);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                shad_bind(screen_shader_sharpen);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, chain.back->color_tex_id);
+                full_geom_draw(&screen_rect);
+            framebuffer_unbind();
+
+            swpchain_swap(&chain);
+        }
+
+//
+//        framebuffer_bind(chain.front);
+//
+//            shad_bind(screen_shader_blur);
+//            glActiveTexture(GL_TEXTURE0);
+//            glBindTexture(GL_TEXTURE_2D, chain.back->color_tex_id);
+//
+//            full_geom_draw(&screen_rect);
+//        framebuffer_unbind();
 
 //        swpchain_swap(&chain);
 
 
         //draw to the screen
         framebuffer_unbind(); //binds the default framebuffer, aka the screen. (a little redundant but i like the clarity)
-            glClearColor(0.0, 0.0, 1.0, 1.0);
-            glClear(GL_COLOR_BUFFER_BIT);
+            glClearColor(0.0f, 0.1f, 0.1f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
             shad_bind(screen_shader_no_effect);
 
             glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, chain.back->color_tex_id);
 //            glBindTexture(GL_TEXTURE_2D, chain.back->color_tex_id);
-            glBindTexture(GL_TEXTURE_2D, noise.id);
+//            glBindTexture(GL_TEXTURE_2D, noise.id);
 
             full_geom_draw(&screen_rect);
             GLERROR();
