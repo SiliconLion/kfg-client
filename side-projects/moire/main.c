@@ -15,13 +15,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "camera.h"
-#include "scene.h"
 #include "framebuffer.h"
 #include "primatives.h"
 #include "shader.h"
 #include "texture.h"
 #include "error-handling.h"
+#include "post-processing-effects.h"
 
 #include "image.h"
 
@@ -282,11 +281,57 @@ int main(int argc, const char* argv[]) {
     Shader* screen_shader_no_effect = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/no-effect.frag");
     Shader* screen_shader_blur = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/blur.frag");
     Shader* screen_shader_sharpen = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/sharpen.frag");
+    Shader* screen_3x3_kernel = shad_new("shaders/postprocessing-pallet/screen.vert", "shaders/postprocessing-pallet/3x3kernel.frag");
     GLERROR();
     FullGeometry screen_rect = prim_new_tex_rect(GL_STATIC_DRAW);
     GLERROR();
+
+    i32 kernel_loc = glGetUniformLocation(screen_3x3_kernel->program, "kernel");
+    i32 offset_loc = glGetUniformLocation(screen_3x3_kernel->program, "offset");
+    i32 screen_texture_loc = glGetUniformLocation(screen_3x3_kernel->program, "screenTexture");
+    printf("screen_texture_loc = %d\n", screen_texture_loc);
+    GLERROR();
+    shad_bind(screen_3x3_kernel);
+    glUniform1i(screen_texture_loc, 0);
+    shad_unbind();
+
+    GLERROR();
+
 //end screen setup stuff
 
+    KernelEffectParamaters3x3 effect_kernels[9];
+    int effect_kernels_len = 9;
+
+    effect_kernels[0] = IDENTITY_KERNEL;
+    effect_kernels[1] = BLUR_KERNEL;
+    effect_kernels[2] = rand_kernel_effect_param_v2();
+    effect_kernels[3] = rand_kernel_effect_param_v2();
+    effect_kernels[4] = rand_kernel_effect_param_v2();
+    effect_kernels[5] = rand_kernel_effect_param_v2();
+    effect_kernels[6] = rand_kernel_effect_param_v2();
+    effect_kernels[7] = rand_kernel_effect_param_v2();
+    effect_kernels[8] = SHARPEN_KERNEL;
+
+    int curr_effect_idx = 0;
+
+//
+//    float blur_kernel[9] = {
+//            1.0 / 16, 2.0 / 16, 1.0 / 16,
+//            2.0 / 16, 4.0 / 16, 2.0 / 16,
+//            1.0 / 16, 2.0 / 16, 1.0 / 16
+//    };
+//
+//    float sharpen_kernel[9] = {
+//            -1.f, -1.f, -1.f,
+//            -1.f, 9.f, -1.f,
+//            -1.f, -1.f, -1.f
+//    };
+//
+//    float weird_kernel[9] = {
+//            1.f, -1.f, 1.f,
+//            -1.f, 1.f, 2.f,
+//            1.f, -2.f, -1.f
+//    };
 
 
 
@@ -318,7 +363,15 @@ int main(int argc, const char* argv[]) {
         glClearColor(0.0, 1.0, 0.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     framebuffer_unbind();
+    GLERROR();
 
+    framebuffer_bind(chain.front);
+        shad_bind(screen_shader_no_effect);
+        tex_bind(&noise, 0);
+        full_geom_draw(&screen_rect);
+    framebuffer_unbind();
+    GLERROR();
+    swpchain_swap(&chain);
 
     //the render loop
     while (!glfwWindowShouldClose(window) && key_states.ESC != KFG_KEY_DOWN) {
@@ -326,55 +379,38 @@ int main(int argc, const char* argv[]) {
         frame_start = SDL_GetTicks();
         glfwPollEvents();
 
-        framebuffer_bind(chain.front);
-            shad_bind(screen_shader_no_effect);
-            tex_bind(&noise, 0);
-            full_geom_draw(&screen_rect);
-        framebuffer_unbind();
-
-        swpchain_swap(&chain);
-
-        for(u32 i = 0; i < 4; i++) {
-            for(u32 j = 0; j < 8; j++) {
-                framebuffer_bind(chain.front);
-                    glClearColor(1.0, 0.0, 0.0, 1.0);
-                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                    shad_bind(screen_shader_blur);
-                    glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, chain.back->color_tex_id);
-                    full_geom_draw(&screen_rect);
-                framebuffer_unbind();
-
-                swpchain_swap(&chain);
-            }
-
+        for(u32 i = 0; i < effect_kernels_len; i++) {
             framebuffer_bind(chain.front);
-                glClearColor(1.0, 0.0, 0.0, 1.0);
+                glClearColor(1.0, 1.0, 1.0, 1.0);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                shad_bind(screen_shader_sharpen);
+                shad_bind(screen_3x3_kernel);
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, chain.back->color_tex_id);
+                glUniform1fv(kernel_loc, 9, effect_kernels[i].kernel);
+                glUniform1f(offset_loc, effect_kernels[i].offset);
+//                glUniform1f(offset_loc, 1.f/400.f);
                 full_geom_draw(&screen_rect);
             framebuffer_unbind();
-
             swpchain_swap(&chain);
         }
 
-//
 //        framebuffer_bind(chain.front);
-//
-//            shad_bind(screen_shader_blur);
+//            glClearColor(1.0, 1.0, 1.0, 1.0);
+//            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//            shad_bind(screen_3x3_kernel);
 //            glActiveTexture(GL_TEXTURE0);
 //            glBindTexture(GL_TEXTURE_2D, chain.back->color_tex_id);
-//
+//            glUniform1fv(kernel_loc, 9, effect_kernels[2].kernel);
+////            glUniform1fv(kernel_loc, 9, sharpen_kernel);
+//            glUniform1f(offset_loc, 1.f/600.f);
 //            full_geom_draw(&screen_rect);
 //        framebuffer_unbind();
-
 //        swpchain_swap(&chain);
 
 
+//        curr_effect_idx = (curr_effect_idx + 1) % effect_kernels_len ;
+
+        GLERROR();
         //draw to the screen
         framebuffer_unbind(); //binds the default framebuffer, aka the screen. (a little redundant but i like the clarity)
             glClearColor(0.0f, 0.1f, 0.1f, 1.0f);
