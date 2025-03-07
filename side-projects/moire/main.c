@@ -261,11 +261,13 @@ int main(int argc, const char* argv[]) {
     random_png(1024, 1024, 2, "assets/random-two-channel.png");
     random_png(1024, 1024, 3, "assets/random-three-channel.png");
     random_png(1024, 1024, 4, "assets/random-four-channel.png");
+    random_png_percent(1024, 1024, 4, "assets/random-three-percent.png", 0.03);
 
 
 
     //load textures
     Texture noise = tex_new("assets/random-three-channel.png");
+    Texture sparse_noise = tex_new("assets/random-three-percent.png");
 
 
     Swapchain chain;
@@ -307,33 +309,12 @@ int main(int argc, const char* argv[]) {
     effect_kernels[2] = rand_kernel_effect_param_v2();
     effect_kernels[3] = rand_kernel_effect_param_v2();
     effect_kernels[4] = rand_kernel_effect_param_v2();
-    effect_kernels[5] = rand_kernel_effect_param_v2();
+    effect_kernels[5] = BLUR_KERNEL;
     effect_kernels[6] = rand_kernel_effect_param_v2();
     effect_kernels[7] = rand_kernel_effect_param_v2();
     effect_kernels[8] = SHARPEN_KERNEL;
 
     int curr_effect_idx = 0;
-
-//
-//    float blur_kernel[9] = {
-//            1.0 / 16, 2.0 / 16, 1.0 / 16,
-//            2.0 / 16, 4.0 / 16, 2.0 / 16,
-//            1.0 / 16, 2.0 / 16, 1.0 / 16
-//    };
-//
-//    float sharpen_kernel[9] = {
-//            -1.f, -1.f, -1.f,
-//            -1.f, 9.f, -1.f,
-//            -1.f, -1.f, -1.f
-//    };
-//
-//    float weird_kernel[9] = {
-//            1.f, -1.f, 1.f,
-//            -1.f, 1.f, 2.f,
-//            1.f, -2.f, -1.f
-//    };
-
-
 
 
 
@@ -367,7 +348,8 @@ int main(int argc, const char* argv[]) {
 
     framebuffer_bind(chain.front);
         shad_bind(screen_shader_no_effect);
-        tex_bind(&noise, 0);
+//        tex_bind(&noise, 0);
+        tex_bind(&sparse_noise, 0);
         full_geom_draw(&screen_rect);
     framebuffer_unbind();
     GLERROR();
